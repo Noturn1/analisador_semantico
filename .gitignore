@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Sistema operacional / editores
+.DS_Store
+.idea/
+.vscode/
+
+# Saídas geradas pelo compilador
+*.tac
+
+# Material da disciplina (enunciado e anexo), mantido apenas localmente
+/trabalho_parte3.pdf
+/codigo_tres_enderecos.pdf
+
+# Pacote de entrega
+*.zip
