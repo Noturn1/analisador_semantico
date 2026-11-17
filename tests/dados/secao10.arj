@@ -1,0 +1,44 @@
+func fat(int n): int {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * fat(n - 1);
+}
+
+func media(int a, float b): float {
+    return (a + b) / 2;
+}
+
+func mostra(str msg) {
+    puts(msg);
+}
+
+func main(): int {
+    int x;
+    float m;
+    input(x);
+    m = media(x, 2.5);
+    int k = int(m) + fat(x);
+    bool neg = NOT (x > 0);
+    int y = -x;
+    while (true) {
+        if (x <= 0) {
+            break;
+        }
+        x = x - 1;
+    }
+    switch (k) {
+        case 0:
+            mostra('zero');
+            break;
+        case 1:
+        case 2:
+            mostra('pequeno');
+            break;
+        default:
+            mostra('grande');
+    }
+    float p = 2.0 ^ -1;
+    puts(m);
+    return 0;
+}
