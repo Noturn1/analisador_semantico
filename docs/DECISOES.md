@@ -208,3 +208,16 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   profundidade, com as variáveis (tipo, nome, posição, marca de parâmetro).
 - **Consequências:** o analisador guarda os escopos fechados em vez de
   descartá-los (`ResultadoSemantico.escopos`).
+
+### #20 — Saída padrão do compilador
+
+- **Contexto:** desde a Parte 2 o compilador imprimia sempre a árvore
+  sintática completa, com centenas de linhas para o exemplo, e na Fase 4 o TAC
+  só aparecia com `--tac`.
+- **Decisão:** sem opções, o compilador imprime os erros e avisos, o código de
+  três endereços (quando o programa é válido) e o veredito. A árvore sintática
+  passa a sair só com `--arvore`. A opção `--tac` deixa de existir, porque o
+  TAC já sai por padrão; `-o arquivo` continua gravando o TAC em arquivo.
+- **Consequências:** a saída padrão mostra o produto final do compilador. As
+  demais informações (`--tokens`, `--acoes`, `--arvore`, `--ast`, `--tabela`)
+  ficam disponíveis para depuração e para a apresentação.

@@ -23,7 +23,7 @@ arquivo é sempre o retrato atual do projeto.
 | 2 — AST | ✅ concluída |
 | 3 — Analisador semântico | ✅ concluída (interpretações a revisar, ver abaixo) |
 | 4 — Gerador de TAC | ✅ concluída (interpretações a revisar, ver abaixo) |
-| 5 — Integração no `main.py` | 🟡 falta decidir a saída padrão |
+| 5 — Integração no `main.py` | ✅ concluída |
 | 6 — Testes e exemplos | ⏳ **próxima** (faltam os exemplos de erros) |
 | 7 — Entrega | ⬜ a fazer |
 
@@ -38,7 +38,8 @@ sintáticos e pode ser vista com `--ast`. O analisador semântico
 cada expressão na AST e imprime a tabela de símbolos com `--tabela`. Os testes
 rodam com `python3 -m unittest discover -s tests`. O gerador de TAC
 (`src/tac.py`) reproduz exatamente o TAC da seção 10 da spec, verificado por
-teste; o código sai com `--tac` ou é gravado com `-o saida.tac`. Os módulos `token.py` e `parser.py`
+teste. Sem opções, o compilador imprime diagnósticos, TAC e veredito
+(decisão #20); `-o saida.tac` grava o TAC em arquivo. Os módulos `token.py` e `parser.py`
 foram renomeados para `tokens.py` e `sintatico.py` (decisão #16).
 
 ---
@@ -222,26 +223,23 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 4. **Sem otimizações:** o `goto` que segue um `break` (código morto) é
    mantido, porque é o que os esquemas da seção 9 produzem.
 
-## Fase 5 — Integração no `main.py`
+## Fase 5 — Integração no `main.py` ✅
 
 - [x] Encadear léxico → sintático → AST → semântico → TAC; cada fase só roda se
       a anterior terminar sem erros; avisos não bloqueiam
-- [x] Opções `--ast`, `--tabela`, `--tac` e `-o saida.tac`
+- [x] Opções `--ast`, `--tabela`, `--arvore` e `-o saida.tac`
 - [x] Manter os códigos de saída: `0` aceito, `1` erros, `2` argumentos/E/S
 - [x] Atualizar a seção "Uso" do `README.md`
-- [ ] **Decidir a saída padrão** (sem opções). Hoje o compilador sempre imprime
-      a árvore sintática completa, herança da Parte 2, com centenas de linhas
-      para o exemplo. O TAC só aparece com `--tac`. Opções: manter; imprimir
-      a árvore sintática só com uma opção (ex.: `--arvore`) e mostrar o TAC
-      por padrão; ou outra combinação.
+- [x] Saída padrão: diagnósticos, TAC e veredito; árvore sintática só com
+      `--arvore` (decisão #20)
 
 ## Fase 6 — Testes e exemplos (≈ 2 dias)
 
 - [x] `exemplos/ExemploArjanov.arj`: válido e usando todas as primitivas
       (sem diagnósticos, gera TAC)
 - [ ] `exemplos/erros_semanticos.arj`: um caso para cada E01–E26 e W01–W02
-      (atenção: E16, "programa sem main", não pode estar no mesmo arquivo que
-      E17/E18, que exigem uma `main`; decidir se vai num segundo arquivo)
+      exceto o E16, que vai em `exemplos/erro_sem_main.arj` (o E16 exige um
+      programa sem `main`, incompatível com os casos E17 e E18)
 - [ ] `tests/` com `unittest` (sem dependências externas):
   - [x] um programa pequeno por código de erro, verificando o código esperado
         (`tests/test_semantico.py`)
