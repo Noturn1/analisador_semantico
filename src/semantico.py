@@ -10,7 +10,8 @@ Duas passadas:
      (E01-E07, E09-E15, E19-E23, E25, E26, W02).
   Ao final, W01 pelo grafo de chamadas a partir da main.
 
-Efeitos sobre a AST: o campo 'tipo' de todo nó de expressão é preenchido.
+Efeitos sobre a AST: o campo 'tipo' de todo nó de expressão é preenchido, e
+o 'tipo_destino' de cada Atrib recebe o tipo da variável atribuída.
 O gerador de código deduz as conversões implícitas (int -> float) comparando
 o tipo de cada expressão com o tipo esperado no contexto.
 
@@ -311,7 +312,9 @@ class AnalisadorSemantico:
         simbolo = self._buscar(a.nome)
         if simbolo is None:
             self._diag("E01", f"variável '{a.nome}' não declarada", a)
-        elif not compativel(simbolo.tipo, t):
+            return
+        a.tipo_destino = simbolo.tipo
+        if not compativel(simbolo.tipo, t):
             self._diag("E04", f"não é possível atribuir {t} a '{a.nome}' "
                               f"do tipo {simbolo.tipo}", a)
 
