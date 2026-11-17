@@ -9,9 +9,9 @@ São definidos:
 A linguagem Arjanov suporta:
   - Tipos de dados: int, float, str, bool
   - Operadores aritméticos: + - * / % ^
-  - Operadores lógicos: AND, OR, XOR, XNOR
+  - Operadores lógicos: AND, OR, XOR, XNOR, NOT (unário)
   - Operadores relacionais: == != < > <= >=
-  - Estruturas: if, else, for, while, switch, case
+  - Estruturas: if, else, for, while, switch, case, default, break
   - Funções: func, return
   - E/S: input, puts
   - Literais: inteiros, decimais, strings (entre aspas simples), booleanos (true, false)
@@ -20,12 +20,15 @@ A linguagem Arjanov suporta:
       Nível 1 - OP_OR:              OR
       Nível 2 - OP_XOR:             XOR, XNOR
       Nível 3 - OP_AND:             AND
-      Nível 4 - OP_RELACIONAL:      ==  !=  <  >  <=  >=
-      Nível 5 - OP_ADITIVO:         +  -
-      Nível 6 - OP_MULTIPLICATIVO:  *  /  %
-      Nível 7 - OP_POTENCIA:        ^
+      Nível 4 - OP_NOT:             NOT (unário)
+      Nível 5 - OP_RELACIONAL:      ==  !=  <  >  <=  >=
+      Nível 6 - OP_ADITIVO:         +  -
+      Nível 7 - OP_MULTIPLICATIVO:  *  /  %
+      Nível 8 - OP_ADITIVO unário:  -  +   (mesmo token; a gramática distingue)
+      Nível 9 - OP_POTENCIA:        ^
 
   O operador específico dentro de cada grupo é identificado pelo lexema.
+  OP_NOT, BREAK e DEFAULT foram acrescentados na Parte 3 (docs/DECISOES.md #10).
 """
 
 from enum import Enum, auto
@@ -58,6 +61,8 @@ class TokenType(Enum):
     WHILE = auto()
     SWITCH = auto()
     CASE = auto()
+    DEFAULT = auto()
+    BREAK = auto()
 
     # Funções
     FUNC = auto()
@@ -72,10 +77,11 @@ class TokenType(Enum):
     OP_OR = auto()  # OR                   (precedência 1 - menor)
     OP_XOR = auto()  # XOR, XNOR            (precedência 2)
     OP_AND = auto()  # AND                  (precedência 3)
-    OP_RELACIONAL = auto()  # ==  !=  <  >  <=  >= (precedência 4)
-    OP_ADITIVO = auto()  # +  -                 (precedência 5)
-    OP_MULTIPLICATIVO = auto()  # *  /  %              (precedência 6)
-    OP_POTENCIA = auto()  # ^                    (precedência 7 - maior)
+    OP_NOT = auto()  # NOT (unário)         (precedência 4)
+    OP_RELACIONAL = auto()  # ==  !=  <  >  <=  >= (precedência 5)
+    OP_ADITIVO = auto()  # +  -                 (precedência 6; 8 se unário)
+    OP_MULTIPLICATIVO = auto()  # *  /  %              (precedência 7)
+    OP_POTENCIA = auto()  # ^                    (precedência 9 - maior)
 
     # Atribuição
     ATRIBUICAO = auto()
@@ -110,6 +116,8 @@ KEYWORDS = {
     "while": TokenType.WHILE,
     "switch": TokenType.SWITCH,
     "case": TokenType.CASE,
+    "default": TokenType.DEFAULT,
+    "break": TokenType.BREAK,
     # Funções
     "func": TokenType.FUNC,
     "main": TokenType.MAIN,
@@ -122,6 +130,7 @@ KEYWORDS = {
     "OR": TokenType.OP_OR,
     "XOR": TokenType.OP_XOR,
     "XNOR": TokenType.OP_XOR,
+    "NOT": TokenType.OP_NOT,
 }
 
 

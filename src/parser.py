@@ -50,6 +50,7 @@ SIMBOLO_LEGIVEL = {
     "OP_AND": "'AND'",
     "OP_OR": "'OR'",
     "OP_XOR": "'XOR'/'XNOR'",
+    "OP_NOT": "'NOT'",
     "IDENTIFICADOR": "identificador",
     "INTEIRO": "literal inteiro",
     "DECIMAL": "literal decimal",
