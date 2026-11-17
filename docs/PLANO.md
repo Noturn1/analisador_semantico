@@ -24,8 +24,8 @@ arquivo é sempre o retrato atual do projeto.
 | 3 — Analisador semântico | ✅ concluída (interpretações a revisar, ver abaixo) |
 | 4 — Gerador de TAC | ✅ concluída (interpretações a revisar, ver abaixo) |
 | 5 — Integração no `main.py` | ✅ concluída |
-| 6 — Testes e exemplos | ⏳ **próxima** (faltam os exemplos de erros) |
-| 7 — Entrega | ⬜ a fazer |
+| 6 — Testes e exemplos | ✅ concluída |
+| 7 — Entrega | ⏳ **próxima** |
 
 O léxico e a gramática já estão na Versão B: 84 produções, 146 estados,
 0 conflitos. `exemplos/ExemploArjanov.arj` (reescrito na nova sintaxe) é
@@ -233,20 +233,26 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 - [x] Saída padrão: diagnósticos, TAC e veredito; árvore sintática só com
       `--arvore` (decisão #20)
 
-## Fase 6 — Testes e exemplos (≈ 2 dias)
+## Fase 6 — Testes e exemplos ✅
 
 - [x] `exemplos/ExemploArjanov.arj`: válido e usando todas as primitivas
       (sem diagnósticos, gera TAC)
-- [ ] `exemplos/erros_semanticos.arj`: um caso para cada E01–E26 e W01–W02
+- [x] `exemplos/erros_semanticos.arj`: um caso para cada E01–E26 e W01–W02
       exceto o E16, que vai em `exemplos/erro_sem_main.arj` (o E16 exige um
       programa sem `main`, incompatível com os casos E17 e E18)
-- [ ] `tests/` com `unittest` (sem dependências externas):
+- [x] `tests/` com `unittest` (sem dependências externas):
   - [x] um programa pequeno por código de erro, verificando o código esperado
         (`tests/test_semantico.py`)
   - [x] comparação exata do TAC da seção 10 (`tests/test_tac.py`)
   - [x] esquemas de tradução da seção 9 (XNOR, renomeação, `widen`, `for`,
         `switch`, `return` implícito...)
   - [x] regressão: tabela SLR com 146 estados e 0 conflitos
+  - [x] os exemplos de erros produzem exatamente um diagnóstico por código
+
+Como a linguagem não tem comentários, cada caso de `erros_semanticos.arj`
+fica numa função com o nome do código (`e01_variavel_nao_declarada`, ...),
+chamada pela `main` para não gerar W01 extra. E17 e E18 estão na própria
+`main` (`func main(int ...): str`).
 
 ## Fase 7 — Entrega (≈ 1 dia)
 
@@ -260,7 +266,7 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 
 1. Leia a seção correspondente da spec e as decisões em `docs/DECISOES.md`.
    Os módulos citam as decisões pelo número (ex.: `ver docs/DECISOES.md #5`).
-2. Trabalhe em um branch por fase: `git switch -c fase-6-exemplos`.
+2. Trabalhe em um branch por fase: `git switch -c fase-7-entrega`.
 3. Rode os testes e os dois exemplos antes de cada commit:
    ```sh
    python3 -m unittest discover -s tests        # deve passar
