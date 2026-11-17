@@ -1,11 +1,14 @@
 """
-grammar.py - Gramática Livre de Contexto da linguagem Arjanov (Parte 2)
+grammar.py - Gramática Livre de Contexto da linguagem Arjanov (Versão B)
 
 Esta é a versão **simplificada** da GLC (ver docs/DECISOES.md #3): as produções
 de expressão usam os terminais *agrupados* do analisador léxico
 (OP_RELACIONAL, OP_ADITIVO, OP_MULTIPLICATIVO, OP_POTENCIA, OP_AND, OP_OR,
-OP_XOR) em vez de um terminal por operador. Assim, o alfabeto de terminais do
-parser coincide com os TokenType do léxico.
+OP_XOR, OP_NOT) em vez de um terminal por operador. Assim, o alfabeto de
+terminais do parser coincide com os TokenType do léxico.
+
+As produções seguem o Apêndice A de docs/Especificacao_Semantica_Arjanov_v2.pdf
+(Versão B, docs/DECISOES.md #10): 84 produções (0..83), 146 estados, 0 conflitos.
 
 Representação:
   - Cada símbolo é uma string.
@@ -20,7 +23,7 @@ A ordem das produções em PRODUCOES define seus números (0..N-1), usados na
 saída de reduções.
 """
 
-from token import TokenType
+from tokens import TokenType
 
 # Símbolo inicial aumentado (produção 0) e símbolo inicial da linguagem.
 SIMBOLO_INICIAL_AUMENTADO = "programa'"
@@ -48,29 +51,37 @@ PRODUCOES: list[tuple[str, tuple[str, ...]]] = [
     ("lista_funcoes", ("lista_funcoes", "funcao")),
     ("lista_funcoes", ("funcao",)),
 
-    # 4 — função
-    ("funcao", ("FUNC", "nome_funcao", "PAREN_ESQ", "parametros", "PAREN_DIR", "bloco")),
+    # 4 — função (tipo de retorno opcional: sem ele, é procedimento)
+    ("funcao", ("FUNC", "nome_funcao", "PAREN_ESQ", "parametros", "PAREN_DIR",
+                "tipo_retorno", "bloco")),
 
-    # 5..6
+    # 5..6 — tipo de retorno
+    ("tipo_retorno", ("DOIS_PONTOS", "tipo")),
+    ("tipo_retorno", EPSILON),
+
+    # 7..8
     ("nome_funcao", ("IDENTIFICADOR",)),
     ("nome_funcao", ("MAIN",)),
 
-    # 7..8 — parâmetros
-    ("parametros", ("lista_ids",)),
+    # 9..10 — parâmetros
+    ("parametros", ("lista_params",)),
     ("parametros", EPSILON),
 
-    # 9..10 — lista de ids
-    ("lista_ids", ("lista_ids", "VIRGULA", "IDENTIFICADOR")),
-    ("lista_ids", ("IDENTIFICADOR",)),
+    # 11..12 — lista de parâmetros (recursão à esquerda)
+    ("lista_params", ("lista_params", "VIRGULA", "param")),
+    ("lista_params", ("param",)),
 
-    # 11 — bloco
+    # 13 — parâmetro tipado
+    ("param", ("tipo", "IDENTIFICADOR")),
+
+    # 14 — bloco
     ("bloco", ("CHAVE_ESQ", "lista_comandos", "CHAVE_DIR")),
 
-    # 12..13 — lista de comandos
+    # 15..16 — lista de comandos
     ("lista_comandos", ("lista_comandos", "comando")),
     ("lista_comandos", EPSILON),
 
-    # 14..21 — comandos
+    # 17..25 — comandos
     ("comando", ("declaracao", "PONTO_VIRGULA")),
     ("comando", ("atribuicao", "PONTO_VIRGULA")),
     ("comando", ("chamada", "PONTO_VIRGULA")),
@@ -79,101 +90,115 @@ PRODUCOES: list[tuple[str, tuple[str, ...]]] = [
     ("comando", ("cmd_while",)),
     ("comando", ("cmd_for",)),
     ("comando", ("cmd_switch",)),
+    ("comando", ("BREAK", "PONTO_VIRGULA")),
 
-    # 22..23 — declaração
+    # 26..27 — declaração
     ("declaracao", ("tipo", "IDENTIFICADOR")),
     ("declaracao", ("tipo", "IDENTIFICADOR", "ATRIBUICAO", "expressao")),
 
-    # 24..27 — tipos
+    # 28..31 — tipos
     ("tipo", ("INT",)),
     ("tipo", ("FLOAT",)),
     ("tipo", ("STR",)),
     ("tipo", ("BOOL",)),
 
-    # 28 — atribuição
+    # 32 — atribuição
     ("atribuicao", ("IDENTIFICADOR", "ATRIBUICAO", "expressao")),
 
-    # 29 — chamada
+    # 33 — chamada
     ("chamada", ("nome_chamada", "PAREN_ESQ", "argumentos", "PAREN_DIR")),
 
-    # 30..32
+    # 34..36
     ("nome_chamada", ("IDENTIFICADOR",)),
     ("nome_chamada", ("PUTS",)),
     ("nome_chamada", ("INPUT",)),
 
-    # 33..34 — argumentos
+    # 37..38 — argumentos
     ("argumentos", ("lista_expr",)),
     ("argumentos", EPSILON),
 
-    # 35..36 — lista de expressões
+    # 39..40 — lista de expressões
     ("lista_expr", ("lista_expr", "VIRGULA", "expressao")),
     ("lista_expr", ("expressao",)),
 
-    # 37..38 — retorno
+    # 41..42 — retorno
     ("retorno", ("RETURN", "expressao")),
     ("retorno", ("RETURN",)),
 
-    # 39 — if
+    # 43 — if
     ("cmd_if", ("IF", "PAREN_ESQ", "expressao", "PAREN_DIR", "bloco", "senao")),
 
-    # 40..41
+    # 44..45
     ("senao", ("ELSE", "bloco")),
     ("senao", EPSILON),
 
-    # 42 — while
+    # 46 — while
     ("cmd_while", ("WHILE", "PAREN_ESQ", "expressao", "PAREN_DIR", "bloco")),
 
-    # 43 — for
+    # 47 — for
     ("cmd_for", ("FOR", "PAREN_ESQ", "for_ini", "PONTO_VIRGULA", "expressao",
                  "PONTO_VIRGULA", "atribuicao", "PAREN_DIR", "bloco")),
 
-    # 44..45
+    # 48..49
     ("for_ini", ("declaracao",)),
     ("for_ini", ("atribuicao",)),
 
-    # 46 — switch
+    # 50 — switch (o default, se houver, vem depois de todos os case)
     ("cmd_switch", ("SWITCH", "PAREN_ESQ", "expressao", "PAREN_DIR",
-                    "CHAVE_ESQ", "lista_casos", "CHAVE_DIR")),
+                    "CHAVE_ESQ", "lista_casos", "padrao", "CHAVE_DIR")),
 
-    # 47..48 — lista de casos
+    # 51..52 — lista de casos
     ("lista_casos", ("lista_casos", "caso")),
     ("lista_casos", EPSILON),
 
-    # 49 — caso
+    # 53 — caso
     ("caso", ("CASE", "expressao", "DOIS_PONTOS", "lista_comandos")),
 
-    # 50 — expressão (raiz da cadeia de precedência)
+    # 54..55 — caso padrão
+    ("padrao", ("DEFAULT", "DOIS_PONTOS", "lista_comandos")),
+    ("padrao", EPSILON),
+
+    # 56 — expressão (raiz da cadeia de precedência)
     ("expressao", ("expr_or",)),
 
-    # 51..52 — OR
+    # 57..58 — OR
     ("expr_or", ("expr_or", "OP_OR", "expr_xor")),
     ("expr_or", ("expr_xor",)),
 
-    # 53..54 — XOR/XNOR (ambos mapeados a OP_XOR pelo léxico)
+    # 59..60 — XOR/XNOR (ambos mapeados a OP_XOR pelo léxico)
     ("expr_xor", ("expr_xor", "OP_XOR", "expr_and")),
     ("expr_xor", ("expr_and",)),
 
-    # 55..56 — AND
-    ("expr_and", ("expr_and", "OP_AND", "expr_rel")),
-    ("expr_and", ("expr_rel",)),
+    # 61..62 — AND
+    ("expr_and", ("expr_and", "OP_AND", "expr_not")),
+    ("expr_and", ("expr_not",)),
 
-    # 57..58 — relacionais (== != < > <= >=  ->  OP_RELACIONAL)
+    # 63..64 — NOT unário (associativo à direita: NOT a == b é NOT (a == b))
+    ("expr_not", ("OP_NOT", "expr_not")),
+    ("expr_not", ("expr_rel",)),
+
+    # 65..66 — relacionais (== != < > <= >=  ->  OP_RELACIONAL)
     ("expr_rel", ("expr_rel", "OP_RELACIONAL", "expr_ad")),
     ("expr_rel", ("expr_ad",)),
 
-    # 59..60 — aditivos (+ -  ->  OP_ADITIVO)
+    # 67..68 — aditivos (+ -  ->  OP_ADITIVO)
     ("expr_ad", ("expr_ad", "OP_ADITIVO", "expr_mul")),
     ("expr_ad", ("expr_mul",)),
 
-    # 61..62 — multiplicativos (* / %  ->  OP_MULTIPLICATIVO)
-    ("expr_mul", ("expr_mul", "OP_MULTIPLICATIVO", "expr_pot")),
-    ("expr_mul", ("expr_pot",)),
+    # 69..70 — multiplicativos (* / %  ->  OP_MULTIPLICATIVO)
+    ("expr_mul", ("expr_mul", "OP_MULTIPLICATIVO", "expr_un")),
+    ("expr_mul", ("expr_un",)),
 
-    # 63..64 — potência (^  ->  OP_POTENCIA, associativa à direita)
-    ("expr_pot", ("expr_prim", "OP_POTENCIA", "expr_pot")),
+    # 71..72 — menos/mais unário (OP_ADITIVO em posição prefixa)
+    ("expr_un", ("OP_ADITIVO", "expr_un")),
+    ("expr_un", ("expr_pot",)),
+
+    # 73..74 — potência (associativa à direita; o expoente pode ter sinal,
+    #          e -2 ^ 2 é -(2 ^ 2))
+    ("expr_pot", ("expr_prim", "OP_POTENCIA", "expr_un")),
     ("expr_pot", ("expr_prim",)),
 
-    # 65..72 — primários
+    # 75..83 — primários
     ("expr_prim", ("PAREN_ESQ", "expressao", "PAREN_DIR")),
     ("expr_prim", ("chamada",)),
     ("expr_prim", ("IDENTIFICADOR",)),
@@ -182,6 +207,8 @@ PRODUCOES: list[tuple[str, tuple[str, ...]]] = [
     ("expr_prim", ("STRING",)),
     ("expr_prim", ("TRUE",)),
     ("expr_prim", ("FALSE",)),
+    # 83 — conversão explícita no estilo função: int(e), float(e)
+    ("expr_prim", ("tipo", "PAREN_ESQ", "expressao", "PAREN_DIR")),
 ]
 
 

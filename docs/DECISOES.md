@@ -138,3 +138,73 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   Parte 2 é preservado pela tag Git `parte-2`, em vez de uma cópia da pasta.
 - **Consequências:** há uma única base de código; a versão anterior pode ser
   consultada com `git checkout parte-2`.
+
+### #13 — Módulo da AST chamado `arvore.py`
+
+- **Contexto:** um arquivo `src/ast.py` ocupa o nome do módulo `ast` da
+  biblioteca padrão, que é importado indiretamente por `dataclasses`
+  (`dataclasses` → `inspect` → `ast`). Com ele, `import dataclasses` falha.
+- **Decisão:** a AST fica em `src/arvore.py`.
+- **Consequências:** o nome segue o padrão em português do projeto e não há
+  colisão. Ver também #16.
+
+### #14 — Nós da AST como `dataclasses`
+
+- **Decisão:** cada construção é uma `@dataclass` derivada de `No`, que guarda
+  `linha` e `coluna`. Nós de expressão derivam de `Expr`, que acrescenta o
+  campo `tipo` (fora do construtor, preenchido pela análise semântica).
+- **Consequências:** menos código repetitivo e `__repr__` pronto para
+  depuração. Posição e `tipo` são declarados com `compare=False`: dois nós
+  são iguais quando têm a mesma estrutura, o que permite escrever testes que
+  comparam a AST com uma árvore montada à mão.
+
+### #15 — Passo do `for` como nó `Atrib`
+
+- **Contexto:** em `for (ini; cond; passo)`, a gramática define o passo como
+  uma `atribuicao`.
+- **Decisão:** o nó `For` guarda o passo como um `Atrib` comum:
+  `For(ini, cond, passo, corpo)`, com `ini` sendo `Decl` ou `Atrib`.
+- **Consequências:** o analisador semântico e o gerador de código tratam o
+  passo com a mesma rotina das atribuições.
+
+### #16 — Nenhum módulo com nome da biblioteca padrão
+
+- **Contexto:** os módulos de `src/` são importados pelo nome, com `src/` à
+  frente da biblioteca padrão em `sys.path`. Um módulo do projeto com o mesmo
+  nome de um módulo padrão o substitui para todo o processo. Na Parte 1 isso
+  já acontecia com `token.py` (o `run.py` tinha um contorno), e na Fase 2
+  passou a quebrar `import dataclasses`
+  (`dataclasses` → `inspect` → `linecache` → `tokenize` → `token`).
+- **Decisão:** `src/token.py` foi renomeado para `src/tokens.py` e
+  `src/parser.py` para `src/sintatico.py` (`parser` também é um módulo
+  padrão no Python 3.9). Novos módulos não devem repetir nomes da
+  biblioteca padrão.
+- **Consequências:** o contorno em `run.py` foi removido. O histórico dos
+  arquivos é preservado pelo `git mv` (`git log --follow src/tokens.py`).
+
+### #17 — Diagnósticos semânticos ordenados por posição
+
+- **Contexto:** a análise semântica tem duas passadas (cadastro das funções e
+  corpos) e o W01 só é calculado no fim, então a ordem de descoberta não
+  segue o fonte.
+- **Decisão:** erros e avisos semânticos são impressos juntos, ordenados por
+  linha e coluna.
+- **Consequências:** a saída acompanha a leitura do arquivo. Os objetos
+  `Diagnostico` guardam o código (`E01`...`W02`) para os testes, mas a
+  mensagem impressa segue o formato da spec, sem o código.
+
+### #18 — Lista de tipos na mensagem do E05
+
+- **Contexto:** a spec define `operador '<op>' não aceita operandos <tipos>`
+  sem fixar como escrever `<tipos>`.
+- **Decisão:** operadores binários listam os dois tipos ligados por "e";
+  unários, o único tipo. Ex.: `operador '+' não aceita operandos str e str`,
+  `operador 'NOT' não aceita operandos int`.
+
+### #19 — Conteúdo da opção `--tabela`
+
+- **Decisão:** imprime a tabela de funções (assinatura e linha) e, para cada
+  função, todos os escopos abertos durante a análise, indentados pela
+  profundidade, com as variáveis (tipo, nome, posição, marca de parâmetro).
+- **Consequências:** o analisador guarda os escopos fechados em vez de
+  descartá-los (`ResultadoSemantico.escopos`).

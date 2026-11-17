@@ -53,19 +53,27 @@ Erros Sintáticos: 4
   ...
 ```
 
-A fase semântica seguirá o formato definido na especificação:
-`[Erro Semântico] Linha L, Coluna C: mensagem` e `[Aviso Semântico] ...`.
+A fase semântica segue o formato definido na especificação, com erros e
+avisos ordenados por posição:
+
+```
+Análise Semântica: 3 erro(s), 1 aviso(s)
+  [Erro Semântico] Linha 6, Coluna 13: variável 'y' não declarada
+  [Erro Semântico] Linha 8, Coluna 13: expressão do switch não pode ser float
+  [Aviso Semântico] Linha 11, Coluna 13: divisão por zero
+  [Erro Semântico] Linha 11, Coluna 21: argumento 2 de 'soma' deve ser int, recebeu str
+```
 
 ## Situação das fases
 
 | Fase | Módulos | Situação |
 |---|---|---|
-| Análise léxica | `src/lexer.py`, `src/token.py` | ✅ concluída (Parte 1) |
-| Análise sintática SLR(1) | `src/grammar.py`, `src/slr.py`, `src/parser.py` | ✅ concluída (Parte 2) |
-| Léxico e gramática da Versão B | `src/token.py`, `src/grammar.py` | ⏳ próxima etapa |
-| Árvore sintática abstrata | `src/ast.py` | ⬜ planejada |
-| Análise semântica | `src/semantico.py` | ⬜ planejada |
-| Geração de código de três endereços | `src/tac.py` | ⬜ planejada |
+| Análise léxica | `src/lexer.py`, `src/tokens.py` | ✅ concluída (Parte 1) |
+| Análise sintática SLR(1) | `src/grammar.py`, `src/slr.py`, `src/sintatico.py` | ✅ concluída (Parte 2) |
+| Léxico e gramática da Versão B | `src/tokens.py`, `src/grammar.py` | ✅ concluída (84 produções, 146 estados, 0 conflitos) |
+| Árvore sintática abstrata | `src/arvore.py` | ✅ concluída |
+| Análise semântica | `src/semantico.py` | ✅ concluída (E01–E26, W01–W02) |
+| Geração de código de três endereços | `src/tac.py` | ⏳ próxima etapa |
 
 O roteiro detalhado, com checklists por fase, está em
 **[`docs/PLANO.md`](docs/PLANO.md)**.
@@ -81,6 +89,9 @@ cd analisador_semantico
 python3 run.py exemplos/ExemploArjanov.arj            # analisa um arquivo
 python3 run.py exemplos/ExemploArjanov.arj --tokens   # inclui a tabela de tokens
 python3 run.py exemplos/ExemploArjanov.arj --acoes    # inclui o traço shift/reduce
+python3 run.py exemplos/ExemploArjanov.arj --ast      # inclui a AST com os tipos
+python3 run.py exemplos/ExemploArjanov.arj --tabela   # inclui a tabela de símbolos
+python3 -m unittest discover -s tests               # roda os testes
 python3 run.py --demo                                 # analisa um programa embutido
 python3 run.py --help                                 # ajuda
 ```
@@ -89,7 +100,7 @@ python3 run.py --help                                 # ajuda
 
 | Código de saída | Significado |
 |---|---|
-| `0` | programa aceito |
+| `0` | programa aceito (avisos semânticos não impedem) |
 | `1` | foram encontrados erros |
 | `2` | erro de argumentos ou de leitura do arquivo |
 
@@ -143,18 +154,20 @@ func main(): int {
 | Operadores (menor → maior precedência) | `OR` · `XOR` `XNOR` · `AND` · `NOT` · `== != < > <= >=` · `+ -` · `* / %` · `-`/`+` unários · `^` |
 | Literais | `10`, `2.5`, `'texto'` (aspas simples), `true`, `false` |
 
-> Os exemplos em `exemplos/` ainda usam a sintaxe da Parte 2 (parâmetros sem
-> tipo) e serão atualizados na Fase 1 do plano.
+> Programas no formato da Parte 2 (parâmetros sem tipo, como `func soma(a, b)`)
+> não são mais aceitos. `exemplos/ExemploArjanov.arj` mostra a sintaxe atual.
 
 ## Arquitetura
 
 | Módulo | Responsabilidade |
 |---|---|
-| `src/token.py` | `TokenType`, palavras reservadas e a classe `Token` |
+| `src/tokens.py` | `TokenType`, palavras reservadas e a classe `Token` |
 | `src/lexer.py` | autômato do léxico, com recuperação em modo pânico |
-| `src/grammar.py` | gramática livre de contexto (produções numeradas) |
+| `src/grammar.py` | gramática livre de contexto da Versão B (84 produções numeradas, Apêndice A da spec) |
 | `src/slr.py` | itens LR(0), CLOSURE/GOTO, FIRST/FOLLOW e tabelas ACTION/GOTO |
-| `src/parser.py` | parser SLR(1) dirigido pela tabela, árvore sintática e recuperação de erros |
+| `src/sintatico.py` | parser SLR(1) dirigido pela tabela, árvore sintática e recuperação de erros |
+| `src/arvore.py` | nós da AST, conversão árvore sintática → AST e impressão (`--ast`) |
+| `src/semantico.py` | tipos, escopos, as duas passadas, erros E01–E26 / avisos W01–W02 e `--tabela` |
 | `src/main.py` | interface de linha de comando e encadeamento das fases |
 
 Alguns princípios do projeto, detalhados em [`docs/DECISOES.md`](docs/DECISOES.md):
@@ -170,6 +183,7 @@ Alguns princípios do projeto, detalhados em [`docs/DECISOES.md`](docs/DECISOES.
 .
 ├── run.py                 atalho para src/main.py
 ├── src/                   código-fonte do compilador
+├── tests/                 testes unittest (python3 -m unittest discover -s tests)
 ├── exemplos/              programas de entrada em Arjanov
 │   ├── ExemploArjanov.arj   programa válido
 │   └── erros.arj            programa com erros léxicos e sintáticos
@@ -194,9 +208,10 @@ A versão entregue na Parte 2 está marcada com a tag `parte-2`
 
 1. Escolha a próxima fase em [`docs/PLANO.md`](docs/PLANO.md) e leia a seção
    correspondente da especificação.
-2. Crie um branch: `git switch -c fase-1-gramatica`.
-3. Antes de cada commit, confira que os exemplos se comportam como esperado:
+2. Crie um branch: `git switch -c fase-4-tac`.
+3. Antes de cada commit, rode os testes e confira os exemplos:
    ```sh
+   python3 -m unittest discover -s tests        # deve passar
    python3 run.py exemplos/ExemploArjanov.arj   # deve ser aceito
    python3 run.py exemplos/erros.arj            # deve ser rejeitado
    ```
