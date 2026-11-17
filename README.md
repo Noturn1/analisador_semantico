@@ -64,8 +64,8 @@ Análise Semântica: 3 erro(s), 1 aviso(s)
   [Erro Semântico] Linha 11, Coluna 21: argumento 2 de 'soma' deve ser int, recebeu str
 ```
 
-Para um programa válido, a última fase gera o código de três endereços
-(`--tac`). Trecho do exemplo da seção 10 da especificação:
+Para um programa válido, a última fase gera o código de três endereços,
+impresso por padrão. Trecho do exemplo da seção 10 da especificação:
 
 ```
 media:
@@ -103,12 +103,12 @@ Requisito: **Python 3.9 ou superior**. Não há dependências externas.
 git clone https://github.com/Noturn1/analisador_semantico.git
 cd analisador_semantico
 
-python3 run.py exemplos/ExemploArjanov.arj            # analisa um arquivo
+python3 run.py exemplos/ExemploArjanov.arj            # erros, TAC e veredito
 python3 run.py exemplos/ExemploArjanov.arj --tokens   # inclui a tabela de tokens
 python3 run.py exemplos/ExemploArjanov.arj --acoes    # inclui o traço shift/reduce
 python3 run.py exemplos/ExemploArjanov.arj --ast      # inclui a AST com os tipos
 python3 run.py exemplos/ExemploArjanov.arj --tabela   # inclui a tabela de símbolos
-python3 run.py exemplos/ExemploArjanov.arj --tac      # inclui o código de três endereços
+python3 run.py exemplos/ExemploArjanov.arj --arvore   # inclui a árvore sintática completa
 python3 run.py exemplos/ExemploArjanov.arj -o saida.tac  # grava o TAC em arquivo
 python3 -m unittest discover -s tests               # roda os testes
 python3 run.py --demo                                 # analisa um programa embutido
@@ -123,7 +123,8 @@ python3 run.py --help                                 # ajuda
 | `1` | foram encontrados erros |
 | `2` | erro de argumentos ou de leitura do arquivo |
 
-Ao final, o compilador imprime o veredito:
+Sem opções, o compilador imprime os erros e avisos de todas as fases, o
+código de três endereços (se o programa for válido) e, ao final, o veredito:
 
 ```
 Resultado

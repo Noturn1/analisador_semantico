@@ -8,11 +8,14 @@ Uso (a partir da pasta do projeto):
     python3 src/main.py <arquivo> --tokens    Também imprime a tabela de tokens
     python3 src/main.py <arquivo> --ast       Também imprime a AST, com os tipos
     python3 src/main.py <arquivo> --tabela    Também imprime a tabela de símbolos
-    python3 src/main.py <arquivo> --tac       Também imprime o código de três endereços
+    python3 src/main.py <arquivo> --arvore    Também imprime a árvore sintática completa
     python3 src/main.py <arquivo> -o saida.tac  Grava o código de três endereços
     python3 src/main.py --help                Exibe esta ajuda
 
 Alternativa: use o atalho `python3 run.py <arquivo>` na raiz do projeto.
+
+Saída padrão: erros e avisos, o código de três endereços (se o programa for
+válido) e o veredito. As demais informações dependem das opções acima.
 
 Pipeline: arquivo -> Lexer (tokens) -> Parser SLR(1) -> AST -> Semântico -> TAC.
 Cada fase só roda se as anteriores terminarem sem erros. Avisos semânticos
@@ -106,12 +109,13 @@ def imprimir_erros_sintaticos(erros):
 
 def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool,
              mostrar_ast: bool = False, mostrar_tabela: bool = False,
-             mostrar_tac: bool = False, saida_tac: str = None) -> int:
+             mostrar_arvore: bool = False, saida_tac: str = None) -> int:
     # 1. Análise léxica
     lexer = Lexer(codigo)
     tokens = lexer.analisar()
 
     cabecalho(f"Compilador Arjanov — {origem}")
+    print()
 
     if mostrar_tokens:
         imprimir_tokens(tokens)
@@ -136,13 +140,14 @@ def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool
             print(f"  {passo:>4}  {acao}")
         print()
 
-    cabecalho("Árvore Sintática")
-    if resultado.arvore is not None:
-        for linha in formatar_arvore(resultado.arvore):
-            print(linha)
-    else:
-        print("  (não foi possível construir a árvore)")
-    print()
+    if mostrar_arvore:
+        cabecalho("Árvore Sintática")
+        if resultado.arvore is not None:
+            for linha in formatar_arvore(resultado.arvore):
+                print(linha)
+        else:
+            print("  (não foi possível construir a árvore)")
+        print()
 
     if lexer.erros:
         imprimir_erros_lexicos(lexer.erros)
@@ -183,11 +188,10 @@ def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool
     # 5. Código de três endereços (só sem erros semânticos)
     if sem is not None and not sem.erros:
         tac = gerar_tac(programa, sem)
-        if mostrar_tac:
-            cabecalho("Código de Três Endereços")
-            for linha in tac:
-                print(linha)
-            print()
+        cabecalho("Código de Três Endereços")
+        for linha in tac:
+            print(linha)
+        print()
         if saida_tac:
             try:
                 Path(saida_tac).write_text("\n".join(tac) + "\n", encoding="utf-8")
@@ -235,7 +239,7 @@ def main(argv: list[str]) -> int:
     mostrar_tokens = "--tokens" in args
     mostrar_ast = "--ast" in args
     mostrar_tabela = "--tabela" in args
-    mostrar_tac = "--tac" in args
+    mostrar_arvore = "--arvore" in args
 
     saida_tac = None
     if "-o" in args:
@@ -250,7 +254,7 @@ def main(argv: list[str]) -> int:
 
     if "--demo" in args:
         return analisar(CODIGO_DEMO, "<demo embutido>", mostrar_acoes, mostrar_tokens,
-                        mostrar_ast, mostrar_tabela, mostrar_tac, saida_tac)
+                        mostrar_ast, mostrar_tabela, mostrar_arvore, saida_tac)
 
     if not posicionais:
         print("Erro: informe um arquivo-fonte ou use --demo.", file=sys.stderr)
@@ -271,7 +275,7 @@ def main(argv: list[str]) -> int:
         return 2
 
     return analisar(codigo, str(caminho), mostrar_acoes, mostrar_tokens, mostrar_ast,
-                    mostrar_tabela, mostrar_tac, saida_tac)
+                    mostrar_tabela, mostrar_arvore, saida_tac)
 
 
 if __name__ == "__main__":
