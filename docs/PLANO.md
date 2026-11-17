@@ -20,8 +20,8 @@ arquivo é sempre o retrato atual do projeto.
 |---|---|
 | 0 — Organização do repositório | ✅ concluída |
 | 1 — Léxico e gramática da Versão B | ✅ concluída |
-| 2 — AST | ⏳ **próxima** (aguarda decisões pendentes) |
-| 3 — Analisador semântico | ⬜ a fazer |
+| 2 — AST | ✅ concluída |
+| 3 — Analisador semântico | ⏳ **próxima** |
 | 4 — Gerador de TAC | ⬜ a fazer |
 | 5 — Integração no `main.py` | ⬜ a fazer |
 | 6 — Testes e exemplos | ⬜ a fazer |
@@ -32,19 +32,9 @@ O léxico e a gramática já estão na Versão B: 84 produções, 146 estados,
 aceito, o programa da seção 10 da spec é aceito e `exemplos/erros.arj` é
 rejeitado com 1 erro léxico e 4 sintáticos.
 
-### Decisões pendentes (precisam do grupo antes da Fase 2)
-
-Cada item vira uma entrada nova em `DECISOES.md` quando for decidido.
-
-1. **Nome do módulo da AST.** Confirmado na prática: um arquivo `src/ast.py`
-   faz `import dataclasses` falhar (`dataclasses` → `inspect` → `ast` resolve
-   para o nosso arquivo). Opções: `src/arvore.py` (sugerido), `src/ast_arjanov.py`,
-   ou manter `ast.py` sem usar `dataclasses`/`inspect`, o que é frágil.
-2. **Forma dos nós.** `dataclasses` (menos código, `__repr__` pronto) ou
-   classes simples com `__init__` explícito (mais didático, sem mágica).
-3. **Expressões de `for`.** O passo é uma `atribuicao`; representá-lo como nó
-   `Atrib` comum (sugerido) ou como campos soltos (`var`, `expr`) dentro de
-   `For`.
+A AST (`src/arvore.py`) é construída para todo programa sem erros léxicos e
+sintáticos e pode ser vista com `--ast`. Os módulos `token.py` e `parser.py`
+foram renomeados para `tokens.py` e `sintatico.py` (decisão #16).
 
 ---
 
@@ -59,12 +49,12 @@ Cada item vira uma entrada nova em `DECISOES.md` quando for decidido.
 
 Spec, seção 2 e Apêndice A. Decisão #10.
 
-- [x] `src/token.py`: novos `TokenType` `OP_NOT`, `BREAK`, `DEFAULT` e as
+- [x] `src/token.py` (hoje `src/tokens.py`, decisão #16): novos `TokenType` `OP_NOT`, `BREAK`, `DEFAULT` e as
       palavras-chave `NOT`, `break`, `default` em `KEYWORDS`
       (o `lexer.py` não muda: `lookup_keyword` já resolve palavras reservadas)
 - [x] `src/grammar.py`: transcrever as produções 0 a 83 do Apêndice A
       (novas ou alteradas: 4–6, 9, 11–13, 25, 50, 54–55, 61–64, 69–73, 83)
-- [x] `src/parser.py`: nomes legíveis para os novos terminais nas mensagens
+- [x] `src/parser.py` (hoje `src/sintatico.py`): nomes legíveis para os novos terminais nas mensagens
 - [x] Validar: tabela com **146 estados e 0 conflitos**
 - [x] Validar: o programa da seção 10 da spec é aceito
 - [x] Atualizar `exemplos/*.arj` para a nova sintaxe (parâmetros tipados)
@@ -81,21 +71,45 @@ da `main`, `return` em todos os caminhos), para servir de teste positivo nas
 Fases 3 e 6. Ao copiar o programa da seção 10 do PDF, remova o caractere
 form feed (`\f`) da quebra de página, senão o léxico o rejeita.
 
-## Fase 2 — Árvore sintática abstrata (≈ 1–2 dias)
+## Fase 2 — Árvore sintática abstrata ✅
 
-Decisão #11. Novo módulo da AST; o nome depende da decisão pendente 1 acima
-(`src/ast.py` colide com o módulo `ast` da biblioteca padrão).
+Decisões #11, #13 a #16. Módulo `src/arvore.py`.
 
-- [ ] Classes de nó (sugestão: `dataclasses`), cada uma com `linha` e `coluna`
+- [x] Classes de nó (`dataclasses`), cada uma com `linha` e `coluna`
       do primeiro token da construção:
       `Programa`, `Funcao`, `Param`, `Bloco`, `Decl`, `Atrib`, `If`, `While`,
       `For`, `Switch`, `Caso`, `Break`, `Return`, `Chamada`, `Binario`,
       `Unario`, `Conversao`, `Literal`, `Var`
-- [ ] Conversor árvore sintática → AST, achatando listas recursivas, produções
+- [x] Conversor árvore sintática → AST, achatando listas recursivas, produções
       ε e a cadeia de precedência (`expr_or → expr_xor → … → expr_prim`)
-- [ ] Operador exato lido do lexema do token (decisão #3)
-- [ ] Campo `tipo` em todo nó de expressão, preenchido pela Fase 3
-- [ ] Impressão da AST (opção `--ast`), iterativa como a da árvore (decisão #8)
+- [x] Operador exato lido do lexema do token (decisão #3)
+- [x] Campo `tipo` em todo nó de expressão, preenchido pela Fase 3
+- [x] Impressão da AST (opção `--ast`), iterativa como a da árvore (decisão #8)
+- [x] Renomear `token.py` → `tokens.py` e `parser.py` → `sintatico.py`
+      (decisão #16; necessário para usar `dataclasses`)
+
+Guia rápido da AST para a Fase 3:
+
+| Nó | Campos |
+|---|---|
+| `Programa` | `funcoes` |
+| `Funcao` | `nome`, `params: list[Param]`, `tipo_retorno` (`None` = procedimento), `corpo: Bloco` |
+| `Param` | `tipo_param`, `nome` |
+| `Bloco` | `comandos` |
+| `Decl` | `tipo_decl`, `nome`, `expr` (ou `None`) |
+| `Atrib` | `nome`, `expr` |
+| `If` / `While` | `cond`, `entao`, `senao` (ou `None`) / `cond`, `corpo` |
+| `For` | `ini` (`Decl` ou `Atrib`), `cond`, `passo: Atrib`, `corpo` |
+| `Switch` | `expr`, `casos: list[Caso]`, `padrao: Caso` (ou `None`) |
+| `Caso` | `valor` (`None` no `default`), `comandos` |
+| `Break` / `Return` | — / `expr` (ou `None`) |
+| `Chamada` | `nome` (inclui `puts` e `input`), `args`; também aparece como comando |
+| `Binario` / `Unario` | `op` (lexema: `'+'`, `'<='`, `'XNOR'`, `'NOT'`...), `esq`, `dir` / `op`, `operando` |
+| `Conversao` | `destino` (`'int'`, `'float'`, `'str'`, `'bool'`), `expr` |
+| `Literal` / `Var` | `valor`, `categoria` (`'int'`, `'float'`, `'str'`, `'bool'`) / `nome` |
+
+Todo `Expr` tem `tipo` (inicialmente `None`). Parênteses não geram nó, e
+`case -1:` vira `Unario('-', Literal(1))`.
 
 ## Fase 3 — Analisador semântico (≈ 4–5 dias)
 
@@ -189,7 +203,7 @@ na spec.
 
 1. Leia a seção correspondente da spec e as decisões em `docs/DECISOES.md`.
    Os módulos citam as decisões pelo número (ex.: `ver docs/DECISOES.md #5`).
-2. Trabalhe em um branch por fase: `git switch -c fase-2-ast`.
+2. Trabalhe em um branch por fase: `git switch -c fase-3-semantico`.
 3. Rode os dois exemplos antes de cada commit:
    ```sh
    python3 run.py exemplos/ExemploArjanov.arj   # deve aceitar

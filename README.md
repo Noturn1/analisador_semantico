@@ -60,11 +60,11 @@ A fase semântica seguirá o formato definido na especificação:
 
 | Fase | Módulos | Situação |
 |---|---|---|
-| Análise léxica | `src/lexer.py`, `src/token.py` | ✅ concluída (Parte 1) |
-| Análise sintática SLR(1) | `src/grammar.py`, `src/slr.py`, `src/parser.py` | ✅ concluída (Parte 2) |
-| Léxico e gramática da Versão B | `src/token.py`, `src/grammar.py` | ✅ concluída (84 produções, 146 estados, 0 conflitos) |
-| Árvore sintática abstrata | a definir (ver plano) | ⏳ próxima etapa |
-| Análise semântica | `src/semantico.py` | ⬜ planejada |
+| Análise léxica | `src/lexer.py`, `src/tokens.py` | ✅ concluída (Parte 1) |
+| Análise sintática SLR(1) | `src/grammar.py`, `src/slr.py`, `src/sintatico.py` | ✅ concluída (Parte 2) |
+| Léxico e gramática da Versão B | `src/tokens.py`, `src/grammar.py` | ✅ concluída (84 produções, 146 estados, 0 conflitos) |
+| Árvore sintática abstrata | `src/arvore.py` | ✅ concluída |
+| Análise semântica | `src/semantico.py` | ⏳ próxima etapa |
 | Geração de código de três endereços | `src/tac.py` | ⬜ planejada |
 
 O roteiro detalhado, com checklists por fase, está em
@@ -81,6 +81,7 @@ cd analisador_semantico
 python3 run.py exemplos/ExemploArjanov.arj            # analisa um arquivo
 python3 run.py exemplos/ExemploArjanov.arj --tokens   # inclui a tabela de tokens
 python3 run.py exemplos/ExemploArjanov.arj --acoes    # inclui o traço shift/reduce
+python3 run.py exemplos/ExemploArjanov.arj --ast      # inclui a árvore sintática abstrata
 python3 run.py --demo                                 # analisa um programa embutido
 python3 run.py --help                                 # ajuda
 ```
@@ -150,11 +151,12 @@ func main(): int {
 
 | Módulo | Responsabilidade |
 |---|---|
-| `src/token.py` | `TokenType`, palavras reservadas e a classe `Token` |
+| `src/tokens.py` | `TokenType`, palavras reservadas e a classe `Token` |
 | `src/lexer.py` | autômato do léxico, com recuperação em modo pânico |
 | `src/grammar.py` | gramática livre de contexto da Versão B (84 produções numeradas, Apêndice A da spec) |
 | `src/slr.py` | itens LR(0), CLOSURE/GOTO, FIRST/FOLLOW e tabelas ACTION/GOTO |
-| `src/parser.py` | parser SLR(1) dirigido pela tabela, árvore sintática e recuperação de erros |
+| `src/sintatico.py` | parser SLR(1) dirigido pela tabela, árvore sintática e recuperação de erros |
+| `src/arvore.py` | nós da AST, conversão árvore sintática → AST e impressão (`--ast`) |
 | `src/main.py` | interface de linha de comando e encadeamento das fases |
 
 Alguns princípios do projeto, detalhados em [`docs/DECISOES.md`](docs/DECISOES.md):
@@ -194,7 +196,7 @@ A versão entregue na Parte 2 está marcada com a tag `parte-2`
 
 1. Escolha a próxima fase em [`docs/PLANO.md`](docs/PLANO.md) e leia a seção
    correspondente da especificação.
-2. Crie um branch: `git switch -c fase-2-ast`.
+2. Crie um branch: `git switch -c fase-3-semantico`.
 3. Antes de cada commit, confira que os exemplos se comportam como esperado:
    ```sh
    python3 run.py exemplos/ExemploArjanov.arj   # deve ser aceito
