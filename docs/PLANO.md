@@ -21,10 +21,10 @@ arquivo é sempre o retrato atual do projeto.
 | 0 — Organização do repositório | ✅ concluída |
 | 1 — Léxico e gramática da Versão B | ✅ concluída |
 | 2 — AST | ✅ concluída |
-| 3 — Analisador semântico | ⏳ **próxima** |
-| 4 — Gerador de TAC | ⬜ a fazer |
+| 3 — Analisador semântico | ✅ concluída (interpretações a revisar, ver abaixo) |
+| 4 — Gerador de TAC | ⏳ **próxima** |
 | 5 — Integração no `main.py` | ⬜ a fazer |
-| 6 — Testes e exemplos | ⬜ a fazer |
+| 6 — Testes e exemplos | 🟡 testes semânticos já existem |
 | 7 — Entrega | ⬜ a fazer |
 
 O léxico e a gramática já estão na Versão B: 84 produções, 146 estados,
@@ -33,7 +33,10 @@ aceito, o programa da seção 10 da spec é aceito e `exemplos/erros.arj` é
 rejeitado com 1 erro léxico e 4 sintáticos.
 
 A AST (`src/arvore.py`) é construída para todo programa sem erros léxicos e
-sintáticos e pode ser vista com `--ast`. Os módulos `token.py` e `parser.py`
+sintáticos e pode ser vista com `--ast`. O analisador semântico
+(`src/semantico.py`) cobre todos os códigos E01–E26 e W01–W02, anota o tipo de
+cada expressão na AST e imprime a tabela de símbolos com `--tabela`. Os testes
+rodam com `python3 -m unittest discover -s tests`. Os módulos `token.py` e `parser.py`
 foram renomeados para `tokens.py` e `sintatico.py` (decisão #16).
 
 ---
@@ -111,26 +114,49 @@ Guia rápido da AST para a Fase 3:
 Todo `Expr` tem `tipo` (inicialmente `None`). Parênteses não geram nó, e
 `case -1:` vira `Unario('-', Literal(1))`.
 
-## Fase 3 — Analisador semântico (≈ 4–5 dias)
+## Fase 3 — Analisador semântico ✅
 
-Spec, seções 3 a 7. Novo módulo `src/semantico.py`, produzindo erros no
+Spec, seções 3 a 7. Módulo `src/semantico.py`, produzindo erros no
 formato `[Erro Semântico] Linha L, Coluna C: mensagem` e avisos
-`[Aviso Semântico] ...`.
+`[Aviso Semântico] ...`. Decisões #17 a #19.
 
-- [ ] Tipos `int`, `float`, `str`, `bool`, `vazio`, `indefinido`; tabela de
+- [x] Tipos `int`, `float`, `str`, `bool`, `vazio`, `indefinido`; tabela de
       compatibilidade e `widen` (seção 3)
-- [ ] Tabela de funções e pilha de escopos de variáveis (seção 4, regras 1–9)
-- [ ] **Passada 1 — cadastro das funções:** E08, E16, E17, E18, E24
-- [ ] **Passada 2 — corpos das funções:**
-  - [ ] expressões: E01, E05, E26, W02 (seção 6.1)
-  - [ ] declaração e atribuição: E02, E03, E04 (seção 6.2)
-  - [ ] controle e `break`: E06, E25 (seções 6.3 e 6.4)
-  - [ ] `switch`: E20, E21, E22, E23 (seção 6.5)
-  - [ ] chamadas e E/S: E07, E09, E10, E11, E19 (seção 6.6)
-  - [ ] retorno: E12, E13, E14, E15 (seção 6.7)
-- [ ] W01: grafo de chamadas e alcançabilidade a partir da `main` (seção 5)
-- [ ] Anotar na AST o tipo de cada expressão e as conversões implícitas
-- [ ] Impressão da tabela de símbolos (opção `--tabela`)
+- [x] Tabela de funções e pilha de escopos de variáveis (seção 4, regras 1–9)
+- [x] **Passada 1 — cadastro das funções:** E08, E16, E17, E18, E24
+- [x] **Passada 2 — corpos das funções:**
+  - [x] expressões: E01, E05, E26, W02 (seção 6.1)
+  - [x] declaração e atribuição: E02, E03, E04 (seção 6.2)
+  - [x] controle e `break`: E06, E25 (seções 6.3 e 6.4)
+  - [x] `switch`: E20, E21, E22, E23 (seção 6.5)
+  - [x] chamadas e E/S: E07, E09, E10, E11, E19 (seção 6.6)
+  - [x] retorno: E12, E13, E14, E15 (seção 6.7)
+- [x] W01: grafo de chamadas e alcançabilidade a partir da `main` (seção 5)
+- [x] Anotar na AST o tipo de cada expressão (as conversões implícitas são
+      deduzidas pelo gerador comparando tipos; ver `precisa_widen`)
+- [x] Impressão da tabela de símbolos (opção `--tabela`)
+
+### Interpretações adotadas onde a spec é omissa (revisar)
+
+Estão implementadas e cobertas por testes, mas podem mudar se o grupo
+preferir outra leitura:
+
+1. **Posição de cada erro** (spec: "primeiro token da construção"):
+   E06/E20 na condição/expressão; E10 no argumento; E21–E23 no valor do
+   `case`; E05 e W02 no início da operação (operando esquerdo); E11, E09,
+   E07, E19 no nome da chamada; E12–E14 no `return`; E08, E15, E17, E18 e
+   W01 no `func`; E16 na primeira linha do programa.
+2. **E09 suprime E10:** com número errado de argumentos, os tipos não são
+   comparados.
+3. **E21 não analisa o valor:** `case x:` gera só E21, mesmo que `x` não
+   exista.
+4. **W01 é omitido quando há E16:** sem `main`, toda função seria
+   inalcançável.
+5. **Função duplicada (E08):** a primeira definição vale para as chamadas,
+   mas o corpo da segunda também é analisado (com os próprios parâmetros).
+6. **Após E03**, o novo nome passa a valer no escopo interno; após E02, a
+   declaração original é mantida.
+7. **W02** vale para divisor literal `0` e `0.0`, inclusive em `%`.
 
 ### Catálogo de erros e avisos (spec, seção 7)
 
@@ -157,7 +183,9 @@ spec; use o texto de lá.
 ## Fase 4 — Gerador de TAC (≈ 4–5 dias)
 
 Spec, seções 8 a 10, e o anexo de instruções da disciplina. Novo módulo
-`src/tac.py`.
+`src/tac.py`. Entrada: a AST já anotada com tipos pelo semântico. Percorra
+expressões sem recursão proporcional ao tamanho (como `_expr` em
+`semantico.py`), porque `a + b + c + ...` gera uma AST profunda à esquerda.
 
 - [ ] Contadores globais de temporários `t1, t2, …` e rótulos `L1, L2, …`
 - [ ] Renomear variáveis do usuário que colidam com temporários ou rótulos
@@ -186,8 +214,11 @@ na spec.
 
 - [ ] `exemplos/ExemploArjanov.arj`: válido e usando todas as primitivas
 - [ ] `exemplos/erros_semanticos.arj`: um caso para cada E01–E26 e W01–W02
+      (atenção: E16, "programa sem main", não pode estar no mesmo arquivo que
+      E17/E18, que exigem uma `main`; decidir se vai num segundo arquivo)
 - [ ] `tests/` com `unittest` (sem dependências externas):
-  - [ ] um programa pequeno por código de erro, verificando o código esperado
+  - [x] um programa pequeno por código de erro, verificando o código esperado
+        (`tests/test_semantico.py`)
   - [ ] comparação exata do TAC da seção 10
   - [ ] regressão: tabela SLR com 146 estados e 0 conflitos
 
@@ -203,9 +234,10 @@ na spec.
 
 1. Leia a seção correspondente da spec e as decisões em `docs/DECISOES.md`.
    Os módulos citam as decisões pelo número (ex.: `ver docs/DECISOES.md #5`).
-2. Trabalhe em um branch por fase: `git switch -c fase-3-semantico`.
-3. Rode os dois exemplos antes de cada commit:
+2. Trabalhe em um branch por fase: `git switch -c fase-4-tac`.
+3. Rode os testes e os dois exemplos antes de cada commit:
    ```sh
+   python3 -m unittest discover -s tests        # deve passar
    python3 run.py exemplos/ExemploArjanov.arj   # deve aceitar
    python3 run.py exemplos/erros.arj            # deve rejeitar
    ```

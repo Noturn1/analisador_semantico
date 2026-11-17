@@ -181,3 +181,30 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   biblioteca padrão.
 - **Consequências:** o contorno em `run.py` foi removido. O histórico dos
   arquivos é preservado pelo `git mv` (`git log --follow src/tokens.py`).
+
+### #17 — Diagnósticos semânticos ordenados por posição
+
+- **Contexto:** a análise semântica tem duas passadas (cadastro das funções e
+  corpos) e o W01 só é calculado no fim, então a ordem de descoberta não
+  segue o fonte.
+- **Decisão:** erros e avisos semânticos são impressos juntos, ordenados por
+  linha e coluna.
+- **Consequências:** a saída acompanha a leitura do arquivo. Os objetos
+  `Diagnostico` guardam o código (`E01`...`W02`) para os testes, mas a
+  mensagem impressa segue o formato da spec, sem o código.
+
+### #18 — Lista de tipos na mensagem do E05
+
+- **Contexto:** a spec define `operador '<op>' não aceita operandos <tipos>`
+  sem fixar como escrever `<tipos>`.
+- **Decisão:** operadores binários listam os dois tipos ligados por "e";
+  unários, o único tipo. Ex.: `operador '+' não aceita operandos str e str`,
+  `operador 'NOT' não aceita operandos int`.
+
+### #19 — Conteúdo da opção `--tabela`
+
+- **Decisão:** imprime a tabela de funções (assinatura e linha) e, para cada
+  função, todos os escopos abertos durante a análise, indentados pela
+  profundidade, com as variáveis (tipo, nome, posição, marca de parâmetro).
+- **Consequências:** o analisador guarda os escopos fechados em vez de
+  descartá-los (`ResultadoSemantico.escopos`).
