@@ -90,7 +90,7 @@ mostra:
 | Árvore sintática abstrata | `src/arvore.py` | ✅ concluída |
 | Análise semântica | `src/semantico.py` | ✅ concluída (E01–E26, W01–W02) |
 | Geração de código de três endereços | `src/tac.py` | ✅ concluída (idêntico ao exemplo da spec) |
-| Testes e exemplos finais | `tests/`, `exemplos/` | ⏳ próxima etapa |
+| Testes e exemplos finais | `tests/`, `exemplos/` | ✅ concluída |
 
 O roteiro detalhado, com checklists por fase, está em
 **[`docs/PLANO.md`](docs/PLANO.md)**.
@@ -206,8 +206,10 @@ Alguns princípios do projeto, detalhados em [`docs/DECISOES.md`](docs/DECISOES.
 ├── src/                   código-fonte do compilador
 ├── tests/                 testes unittest (python3 -m unittest discover -s tests)
 ├── exemplos/              programas de entrada em Arjanov
-│   ├── ExemploArjanov.arj   programa válido
-│   └── erros.arj            programa com erros léxicos e sintáticos
+│   ├── ExemploArjanov.arj   programa válido, com todas as primitivas
+│   ├── erros.arj            erros léxicos e sintáticos
+│   ├── erros_semanticos.arj um caso por erro/aviso semântico (exceto E16)
+│   └── erro_sem_main.arj    o caso E16 (programa sem main)
 └── docs/
     ├── PLANO.md                                plano de implementação da Parte 3
     ├── DECISOES.md                             registro de decisões de projeto
@@ -229,7 +231,7 @@ A versão entregue na Parte 2 está marcada com a tag `parte-2`
 
 1. Escolha a próxima fase em [`docs/PLANO.md`](docs/PLANO.md) e leia a seção
    correspondente da especificação.
-2. Crie um branch a partir da `main` atualizada: `git switch -c fase-6-exemplos`.
+2. Crie um branch a partir da `main` atualizada: `git switch -c fase-7-entrega`.
 3. Antes de cada commit, rode os testes e confira os exemplos:
    ```sh
    python3 -m unittest discover -s tests        # deve passar
