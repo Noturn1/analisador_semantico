@@ -1,25 +1,40 @@
-func soma(a, b) {
+func soma(int a, int b): int {
     return a + b;
+}
+
+func media(int a, float b): float {
+    return (a + b) / 2;
 }
 
 func vazia() {
     return;
 }
 
-func classifica(n) {
+func mostra(str msg) {
+    puts(msg);
+}
+
+func classifica(int n): int {
     if (n > 0) {
-        puts('positivo');
+        mostra('positivo');
     } else {
         if (n < 0) {
-            puts('negativo');
+            mostra('negativo');
         }
     }
     return n;
 }
 
-func main() {
+func fat(int n): int {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * fat(n - 1);
+}
+
+func main(): int {
     int contador;
-    float media = 0.0;
+    float m = 0.0;
     str nome = 'Arjanov';
     bool ativo = true;
 
@@ -32,6 +47,13 @@ func main() {
     bool b5 = (contador == 10) AND (contador != 0);
     bool b6 = contador < 100 OR contador > 5;
     bool b7 = contador <= 10 AND contador >= 1;
+    bool b8 = NOT ativo;
+    bool b9 = NOT contador == 10;
+
+    int neg = -contador;
+    int pos = +contador;
+    float inv = 2.0 ^ -1;
+    int quadrado = -2 ^ 2;
 
     int soma_ac = 0;
     for (int i = 1; i <= contador; i = i + 1) {
@@ -46,10 +68,16 @@ func main() {
     int k = 0;
     while (k < contador) {
         k = k + 1;
+        if (k == 5) {
+            break;
+        }
     }
 
     float pot = 2.0 ^ 3.0 ^ 2.0;
-    float expr = (media + contador) * 2 - soma(1, 2) / 3 % 2;
+    float expr = (m + contador) * 2 - soma(1, 2) / 3 % 2;
+    m = media(contador, 2.5);
+    int truncado = int(m) + fat(3);
+    float real = float(truncado) / 2;
 
     puts('Nome: ');
     puts(nome);
@@ -60,14 +88,23 @@ func main() {
 
     if (ativo) {
         puts('ativo');
+    } else {
+        puts('inativo');
     }
 
     switch (contador) {
         case 0:
-            puts('zero');
+            mostra('zero');
+            break;
         case 1:
         case 2:
-            puts('um ou dois');
+            mostra('um ou dois');
+            break;
+        case -1:
+            mostra('menos um');
+            break;
+        default:
+            mostra('outro');
     }
 
     switch (k) {

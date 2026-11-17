@@ -1,5 +1,5 @@
 """
-main.py - Compilador Arjanov (Parte 2): pipeline léxico + sintático
+main.py - Compilador Arjanov: pipeline léxico + sintático (Versão B da gramática)
 
 Uso (a partir da pasta do projeto):
     python3 src/main.py <arquivo-fonte>       Analisa o arquivo informado
@@ -27,26 +27,34 @@ from parser import Parser, formatar_arvore
 from slr import TabelaSLR
 
 
-CODIGO_DEMO = """func calcula_media(num1, num2) {
-    float media = (num1 + num2) / 2;
+CODIGO_DEMO = """func calcula_media(int num1, int num2): float {
+    float media = (num1 + num2) / 2.0;
     return media;
 }
 
-func main() {
+func main(): int {
     int contador = 0;
-    bool ativo = true AND false;
+    bool ativo = NOT (true AND false);
     puts('Media: ');
     input(contador);
+    puts(calcula_media(contador, 3));
 
     for (int i = 0; i < contador; i = i + 1) {
         puts(i);
+        if (i == 5) {
+            break;
+        }
     }
 
     switch (contador) {
         case 0:
             puts('zero');
-        case 1:
-            puts('um');
+            break;
+        case -1:
+            puts('menos um');
+            break;
+        default:
+            puts('outro');
     }
 
     return 0;
