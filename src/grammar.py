@@ -23,7 +23,7 @@ A ordem das produções em PRODUCOES define seus números (0..N-1), usados na
 saída de reduções.
 """
 
-from token import TokenType
+from tokens import TokenType
 
 # Símbolo inicial aumentado (produção 0) e símbolo inicial da linguagem.
 SIMBOLO_INICIAL_AUMENTADO = "programa'"

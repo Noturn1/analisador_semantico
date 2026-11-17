@@ -9,10 +9,8 @@ lexer.py - Analisador Léxico da linguagem Arjanov
   4. Detecta e reporta erros léxicos com recuperação em modo pânico
 
 Observação sobre importação:
-  O arquivo token.py existe no mesmo diretório. Python prioriza o
-  diretório do script sobre a biblioteca padrão (que também possui
-  um módulo chamado 'token'), então a importação abaixo funciona
-  desde que lexer.py seja executado a partir da pasta do projeto.
+  O módulo de tokens se chama tokens.py (e não token.py) para não colidir
+  com o módulo 'token' da biblioteca padrão (ver docs/DECISOES.md #16).
 
 Ajuste da Parte 2 (ver docs/DECISOES.md #9):
   Em "string não terminada" o léxico agora emite também um token ERRO
@@ -21,7 +19,7 @@ Ajuste da Parte 2 (ver docs/DECISOES.md #9):
   recuperação em modo pânico.
 """
 
-from token import Token, TokenType, lookup_keyword
+from tokens import Token, TokenType, lookup_keyword
 
 # Erro Léxico
 

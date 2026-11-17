@@ -21,9 +21,9 @@ Códigos de saída:
 import sys
 from pathlib import Path
 
-from token import Token
+from tokens import Token
 from lexer import Lexer, LexerError
-from parser import Parser, formatar_arvore
+from sintatico import Parser, formatar_arvore
 from slr import TabelaSLR
 
 

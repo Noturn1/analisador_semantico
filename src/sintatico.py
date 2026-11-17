@@ -1,5 +1,5 @@
 """
-parser.py - Analisador Sintático SLR(1) da linguagem Arjanov
+sintatico.py - Analisador Sintático SLR(1) da linguagem Arjanov
 
 Autômato de pilha dirigido pelas tabelas ACTION/GOTO de slr.py:
 
@@ -22,7 +22,7 @@ Saída (ver docs/DECISOES.md #4): aceita/rejeita, lista de erros sintáticos, o
 traço de ações shift/reduce e a árvore sintática.
 """
 
-from token import Token, TokenType
+from tokens import Token, TokenType
 from grammar import (
     PRODUCOES,
     NAO_TERMINAIS_RECUPERACAO,

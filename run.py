@@ -13,10 +13,10 @@ from pathlib import Path
 
 SRC = Path(__file__).resolve().parent / "src"
 
-# src/ precisa vir antes da biblioteca padrão: o projeto possui um módulo
-# token.py, homônimo do módulo 'token' da stdlib.
+# Os módulos de src/ são importados pelo nome (ex.: `from tokens import ...`).
+# Nenhum deles tem nome igual a um módulo da biblioteca padrão
+# (ver docs/DECISOES.md #16).
 sys.path.insert(0, str(SRC))
-sys.modules.pop("token", None)
 
 if __name__ == "__main__":
     sys.argv[0] = str(SRC / "main.py")
