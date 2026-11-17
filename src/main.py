@@ -1,5 +1,5 @@
 """
-main.py - Compilador Arjanov: pipeline léxico, sintático e semântico (Versão B)
+main.py - Compilador Arjanov: léxico, sintático, semântico e geração de TAC
 
 Uso (a partir da pasta do projeto):
     python3 src/main.py <arquivo-fonte>       Analisa o arquivo informado
@@ -8,13 +8,15 @@ Uso (a partir da pasta do projeto):
     python3 src/main.py <arquivo> --tokens    Também imprime a tabela de tokens
     python3 src/main.py <arquivo> --ast       Também imprime a AST, com os tipos
     python3 src/main.py <arquivo> --tabela    Também imprime a tabela de símbolos
+    python3 src/main.py <arquivo> --tac       Também imprime o código de três endereços
+    python3 src/main.py <arquivo> -o saida.tac  Grava o código de três endereços
     python3 src/main.py --help                Exibe esta ajuda
 
 Alternativa: use o atalho `python3 run.py <arquivo>` na raiz do projeto.
 
-Pipeline: arquivo -> Lexer (tokens) -> Parser SLR(1) -> AST -> Semântico -> relatório.
-A AST e a análise semântica só rodam se não houver erros léxicos nem
-sintáticos. Avisos semânticos não tornam o programa inválido.
+Pipeline: arquivo -> Lexer (tokens) -> Parser SLR(1) -> AST -> Semântico -> TAC.
+Cada fase só roda se as anteriores terminarem sem erros. Avisos semânticos
+não impedem a geração de código.
 
 Códigos de saída:
     0 : programa ACEITO (pode haver avisos semânticos)
@@ -30,6 +32,7 @@ from lexer import Lexer, LexerError
 from sintatico import Parser, formatar_arvore
 from arvore import construir_ast, formatar_ast
 from semantico import analisar as analisar_semantica, formatar_tabela
+from tac import gerar_tac
 from slr import TabelaSLR
 
 
@@ -102,7 +105,8 @@ def imprimir_erros_sintaticos(erros):
 
 
 def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool,
-             mostrar_ast: bool = False, mostrar_tabela: bool = False) -> int:
+             mostrar_ast: bool = False, mostrar_tabela: bool = False,
+             mostrar_tac: bool = False, saida_tac: str = None) -> int:
     # 1. Análise léxica
     lexer = Lexer(codigo)
     tokens = lexer.analisar()
@@ -176,7 +180,24 @@ def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool
                 print(f"  {d}")
             print()
 
-    # 5. Veredito
+    # 5. Código de três endereços (só sem erros semânticos)
+    if sem is not None and not sem.erros:
+        tac = gerar_tac(programa, sem)
+        if mostrar_tac:
+            cabecalho("Código de Três Endereços")
+            for linha in tac:
+                print(linha)
+            print()
+        if saida_tac:
+            try:
+                Path(saida_tac).write_text("\n".join(tac) + "\n", encoding="utf-8")
+            except OSError as e:
+                print(f"Erro ao gravar '{saida_tac}': {e}", file=sys.stderr)
+                return 2
+            print(f"Código de três endereços gravado em '{saida_tac}'.")
+            print()
+
+    # 6. Veredito
     cabecalho("Resultado")
     if sem is not None and not sem.erros:
         print("  ACEITO — programa válido.")
@@ -214,11 +235,22 @@ def main(argv: list[str]) -> int:
     mostrar_tokens = "--tokens" in args
     mostrar_ast = "--ast" in args
     mostrar_tabela = "--tabela" in args
-    posicionais = [a for a in args if not a.startswith("--")]
+    mostrar_tac = "--tac" in args
+
+    saida_tac = None
+    if "-o" in args:
+        i = args.index("-o")
+        if i + 1 >= len(args) or args[i + 1].startswith("-"):
+            print("Erro: -o exige o nome do arquivo de saída.", file=sys.stderr)
+            return 2
+        saida_tac = args[i + 1]
+        args = args[:i] + args[i + 2:]
+
+    posicionais = [a for a in args if not a.startswith("-")]
 
     if "--demo" in args:
         return analisar(CODIGO_DEMO, "<demo embutido>", mostrar_acoes, mostrar_tokens,
-                        mostrar_ast, mostrar_tabela)
+                        mostrar_ast, mostrar_tabela, mostrar_tac, saida_tac)
 
     if not posicionais:
         print("Erro: informe um arquivo-fonte ou use --demo.", file=sys.stderr)
@@ -239,7 +271,7 @@ def main(argv: list[str]) -> int:
         return 2
 
     return analisar(codigo, str(caminho), mostrar_acoes, mostrar_tokens, mostrar_ast,
-                    mostrar_tabela)
+                    mostrar_tabela, mostrar_tac, saida_tac)
 
 
 if __name__ == "__main__":

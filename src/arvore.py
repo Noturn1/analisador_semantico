@@ -57,10 +57,15 @@ class Expr(No):
 
 @dataclass
 class Literal(Expr):
-    """Constante: 'categoria' é 'int', 'float', 'str' ou 'bool'."""
+    """Constante: 'categoria' é 'int', 'float', 'str' ou 'bool'.
+
+    'lexema' é o texto do fonte (sem aspas, no caso de str), usado pelo
+    gerador de código, que escreve as constantes como no fonte.
+    """
 
     valor: Union[int, float, str, bool]
     categoria: str
+    lexema: str = field(default="", compare=False)
 
 
 @dataclass
@@ -119,8 +124,12 @@ class Decl(No):
 
 @dataclass
 class Atrib(No):
+    """Atribuição. 'tipo_destino' (tipo da variável) é preenchido pela análise
+    semântica e usado pelo gerador de código para a conversão implícita."""
+
     nome: str
     expr: Expr
+    tipo_destino: Optional[str] = field(default=None, init=False, compare=False)
 
 
 @dataclass
@@ -477,7 +486,8 @@ def _primario(no: NoArvore) -> Expr:
 
     categoria, converter = _LITERAIS[primeiro.simbolo]
     return Literal(linha=tok.linha, coluna=tok.coluna,
-                   valor=converter(tok.lexema), categoria=categoria)
+                   valor=converter(tok.lexema), categoria=categoria,
+                   lexema=tok.lexema)
 
 
 # ---------------------------------------------------------------------------

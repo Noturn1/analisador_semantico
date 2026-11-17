@@ -64,6 +64,22 @@ Análise Semântica: 3 erro(s), 1 aviso(s)
   [Erro Semântico] Linha 11, Coluna 21: argumento 2 de 'soma' deve ser int, recebeu str
 ```
 
+Para um programa válido, a última fase gera o código de três endereços
+(`--tac`). Trecho do exemplo da seção 10 da especificação:
+
+```
+media:
+    t4 = inttofloat(a)
+    t5 = t4 + b
+    t6 = t5 / 2.0
+    return t6
+
+mostra:
+    param msg
+    call puts, 1
+    return
+```
+
 ## Situação das fases
 
 | Fase | Módulos | Situação |
@@ -73,7 +89,8 @@ Análise Semântica: 3 erro(s), 1 aviso(s)
 | Léxico e gramática da Versão B | `src/tokens.py`, `src/grammar.py` | ✅ concluída (84 produções, 146 estados, 0 conflitos) |
 | Árvore sintática abstrata | `src/arvore.py` | ✅ concluída |
 | Análise semântica | `src/semantico.py` | ✅ concluída (E01–E26, W01–W02) |
-| Geração de código de três endereços | `src/tac.py` | ⏳ próxima etapa |
+| Geração de código de três endereços | `src/tac.py` | ✅ concluída (idêntico ao exemplo da spec) |
+| Testes e exemplos finais | `tests/`, `exemplos/` | ⏳ próxima etapa |
 
 O roteiro detalhado, com checklists por fase, está em
 **[`docs/PLANO.md`](docs/PLANO.md)**.
@@ -91,6 +108,8 @@ python3 run.py exemplos/ExemploArjanov.arj --tokens   # inclui a tabela de token
 python3 run.py exemplos/ExemploArjanov.arj --acoes    # inclui o traço shift/reduce
 python3 run.py exemplos/ExemploArjanov.arj --ast      # inclui a AST com os tipos
 python3 run.py exemplos/ExemploArjanov.arj --tabela   # inclui a tabela de símbolos
+python3 run.py exemplos/ExemploArjanov.arj --tac      # inclui o código de três endereços
+python3 run.py exemplos/ExemploArjanov.arj -o saida.tac  # grava o TAC em arquivo
 python3 -m unittest discover -s tests               # roda os testes
 python3 run.py --demo                                 # analisa um programa embutido
 python3 run.py --help                                 # ajuda
@@ -168,6 +187,7 @@ func main(): int {
 | `src/sintatico.py` | parser SLR(1) dirigido pela tabela, árvore sintática e recuperação de erros |
 | `src/arvore.py` | nós da AST, conversão árvore sintática → AST e impressão (`--ast`) |
 | `src/semantico.py` | tipos, escopos, as duas passadas, erros E01–E26 / avisos W01–W02 e `--tabela` |
+| `src/tac.py` | esquemas de tradução da seção 9 da spec: TAC com temporários e rótulos globais |
 | `src/main.py` | interface de linha de comando e encadeamento das fases |
 
 Alguns princípios do projeto, detalhados em [`docs/DECISOES.md`](docs/DECISOES.md):
@@ -208,7 +228,7 @@ A versão entregue na Parte 2 está marcada com a tag `parte-2`
 
 1. Escolha a próxima fase em [`docs/PLANO.md`](docs/PLANO.md) e leia a seção
    correspondente da especificação.
-2. Crie um branch: `git switch -c fase-4-tac`.
+2. Crie um branch a partir da `main` atualizada: `git switch -c fase-6-exemplos`.
 3. Antes de cada commit, rode os testes e confira os exemplos:
    ```sh
    python3 -m unittest discover -s tests        # deve passar

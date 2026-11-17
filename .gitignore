@@ -12,6 +12,7 @@ venv/
 
 # Saídas geradas pelo compilador
 *.tac
+!tests/dados/*.tac
 
 # Material da disciplina (enunciado e anexo), mantido apenas localmente
 /trabalho_parte3.pdf

@@ -22,9 +22,9 @@ arquivo é sempre o retrato atual do projeto.
 | 1 — Léxico e gramática da Versão B | ✅ concluída |
 | 2 — AST | ✅ concluída |
 | 3 — Analisador semântico | ✅ concluída (interpretações a revisar, ver abaixo) |
-| 4 — Gerador de TAC | ⏳ **próxima** |
-| 5 — Integração no `main.py` | ⬜ a fazer |
-| 6 — Testes e exemplos | 🟡 testes semânticos já existem |
+| 4 — Gerador de TAC | ✅ concluída (interpretações a revisar, ver abaixo) |
+| 5 — Integração no `main.py` | 🟡 falta decidir a saída padrão |
+| 6 — Testes e exemplos | ⏳ **próxima** (faltam os exemplos de erros) |
 | 7 — Entrega | ⬜ a fazer |
 
 O léxico e a gramática já estão na Versão B: 84 produções, 146 estados,
@@ -36,7 +36,9 @@ A AST (`src/arvore.py`) é construída para todo programa sem erros léxicos e
 sintáticos e pode ser vista com `--ast`. O analisador semântico
 (`src/semantico.py`) cobre todos os códigos E01–E26 e W01–W02, anota o tipo de
 cada expressão na AST e imprime a tabela de símbolos com `--tabela`. Os testes
-rodam com `python3 -m unittest discover -s tests`. Os módulos `token.py` e `parser.py`
+rodam com `python3 -m unittest discover -s tests`. O gerador de TAC
+(`src/tac.py`) reproduz exatamente o TAC da seção 10 da spec, verificado por
+teste; o código sai com `--tac` ou é gravado com `-o saida.tac`. Os módulos `token.py` e `parser.py`
 foram renomeados para `tokens.py` e `sintatico.py` (decisão #16).
 
 ---
@@ -180,47 +182,73 @@ preferir outra leitura:
 As mensagens exatas e exemplos de cada código estão na tabela da seção 7 da
 spec; use o texto de lá.
 
-## Fase 4 — Gerador de TAC (≈ 4–5 dias)
+## Fase 4 — Gerador de TAC ✅
 
-Spec, seções 8 a 10, e o anexo de instruções da disciplina. Novo módulo
-`src/tac.py`. Entrada: a AST já anotada com tipos pelo semântico. Percorra
-expressões sem recursão proporcional ao tamanho (como `_expr` em
-`semantico.py`), porque `a + b + c + ...` gera uma AST profunda à esquerda.
+Spec, seções 8 a 10. Módulo `src/tac.py`. Entrada: a AST anotada pelo
+semântico (`tipo` em cada expressão e `tipo_destino` em cada `Atrib`).
+Expressões são percorridas em pós-ordem com pilha explícita, como no
+semântico. O nó `Literal` passou a guardar o `lexema` do fonte, porque a spec
+manda escrever as constantes como no fonte.
 
-- [ ] Contadores globais de temporários `t1, t2, …` e rótulos `L1, L2, …`
-- [ ] Renomear variáveis do usuário que colidam com temporários ou rótulos
+- [x] Contadores globais de temporários `t1, t2, …` e rótulos `L1, L2, …`
+- [x] Renomear variáveis do usuário que colidam com temporários ou rótulos
       (ex.: `t1` → `_t1`)
-- [ ] `widen(a, de, para)` (9.1)
-- [ ] Expressões (9.2): `XNOR` via `!`, menos unário com dobra de constante
-- [ ] Declaração e atribuição (9.3)
-- [ ] `cond(B, Lf)` com o caso especial da comparação única (9.4)
-- [ ] `if`, `while`, `for` e `break` com pilha de rótulos de saída (9.5)
-- [ ] `switch` com fallthrough (9.6)
-- [ ] Chamadas, `puts`, `input`, `return` e `return` implícito no fim de
+- [x] `widen(a, de, para)` (9.1)
+- [x] Expressões (9.2): `XNOR` via `!`, menos unário com dobra de constante
+- [x] Declaração e atribuição (9.3)
+- [x] `cond(B, Lf)` com o caso especial da comparação única (9.4)
+- [x] `if`, `while`, `for` e `break` com pilha de rótulos de saída (9.5)
+- [x] `switch` com fallthrough (9.6)
+- [x] Chamadas, `puts`, `input`, `return` e `return` implícito no fim de
       procedimentos (9.7)
 
 **Pronto quando:** o programa da seção 10 gera **exatamente** o TAC impresso
-na spec.
+na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 
-## Fase 5 — Integração no `main.py` (≈ ½ dia)
+### Interpretações adotadas onde a spec é omissa (revisar)
 
-- [ ] Encadear léxico → sintático → AST → semântico → TAC; cada fase só roda se
+1. **Ordem de `widen` e `param` nas chamadas.** A spec escreve
+   `param widen(e1, ...) ; ... ; param widen(en, ...)`, o que admite emitir
+   cada `inttofloat` logo antes do seu `param`. Adotado: todas as conversões
+   primeiro e depois os `param` juntos, logo antes do `call`, para que nenhuma
+   instrução fique entre os `param` de uma mesma chamada. O exemplo da seção
+   10 não é afetado.
+2. **Renomeação com `_`** aplicada só a variáveis e parâmetros, como diz a
+   spec. Uma *função* chamada `L1` geraria o rótulo `L1:`, que colide com os
+   rótulos internos. Pode-se estender a regra às funções ou deixar como está,
+   porque é um caso raro.
+3. **Formato:** instruções recuadas com 4 espaços, rótulos na coluna zero e
+   uma linha em branco entre funções. O arquivo de `-o` é gravado em UTF-8.
+4. **Sem otimizações:** o `goto` que segue um `break` (código morto) é
+   mantido, porque é o que os esquemas da seção 9 produzem.
+
+## Fase 5 — Integração no `main.py`
+
+- [x] Encadear léxico → sintático → AST → semântico → TAC; cada fase só roda se
       a anterior terminar sem erros; avisos não bloqueiam
-- [ ] Opções `--ast`, `--tabela`, `--tac` e `-o saida.tac`
-- [ ] Manter os códigos de saída: `0` aceito, `1` erros, `2` argumentos/E/S
-- [ ] Atualizar a seção "Uso" do `README.md`
+- [x] Opções `--ast`, `--tabela`, `--tac` e `-o saida.tac`
+- [x] Manter os códigos de saída: `0` aceito, `1` erros, `2` argumentos/E/S
+- [x] Atualizar a seção "Uso" do `README.md`
+- [ ] **Decidir a saída padrão** (sem opções). Hoje o compilador sempre imprime
+      a árvore sintática completa, herança da Parte 2, com centenas de linhas
+      para o exemplo. O TAC só aparece com `--tac`. Opções: manter; imprimir
+      a árvore sintática só com uma opção (ex.: `--arvore`) e mostrar o TAC
+      por padrão; ou outra combinação.
 
 ## Fase 6 — Testes e exemplos (≈ 2 dias)
 
-- [ ] `exemplos/ExemploArjanov.arj`: válido e usando todas as primitivas
+- [x] `exemplos/ExemploArjanov.arj`: válido e usando todas as primitivas
+      (sem diagnósticos, gera TAC)
 - [ ] `exemplos/erros_semanticos.arj`: um caso para cada E01–E26 e W01–W02
       (atenção: E16, "programa sem main", não pode estar no mesmo arquivo que
       E17/E18, que exigem uma `main`; decidir se vai num segundo arquivo)
 - [ ] `tests/` com `unittest` (sem dependências externas):
   - [x] um programa pequeno por código de erro, verificando o código esperado
         (`tests/test_semantico.py`)
-  - [ ] comparação exata do TAC da seção 10
-  - [ ] regressão: tabela SLR com 146 estados e 0 conflitos
+  - [x] comparação exata do TAC da seção 10 (`tests/test_tac.py`)
+  - [x] esquemas de tradução da seção 9 (XNOR, renomeação, `widen`, `for`,
+        `switch`, `return` implícito...)
+  - [x] regressão: tabela SLR com 146 estados e 0 conflitos
 
 ## Fase 7 — Entrega (≈ 1 dia)
 
@@ -234,7 +262,7 @@ na spec.
 
 1. Leia a seção correspondente da spec e as decisões em `docs/DECISOES.md`.
    Os módulos citam as decisões pelo número (ex.: `ver docs/DECISOES.md #5`).
-2. Trabalhe em um branch por fase: `git switch -c fase-4-tac`.
+2. Trabalhe em um branch por fase: `git switch -c fase-6-exemplos`.
 3. Rode os testes e os dois exemplos antes de cada commit:
    ```sh
    python3 -m unittest discover -s tests        # deve passar
