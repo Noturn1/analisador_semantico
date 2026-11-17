@@ -156,6 +156,15 @@ class TestExemplos(unittest.TestCase):
         codigo = (RAIZ / "exemplos" / "ExemploArjanov.arj").read_text(encoding="latin-1")
         self.assertEqual(codigos(codigo), [])
 
+    def test_exemplo_de_erros_tem_um_caso_por_codigo(self):
+        codigo = (RAIZ / "exemplos" / "erros_semanticos.arj").read_text(encoding="latin-1")
+        esperados = sorted(c for c in TestErros.CASOS if c != "E16")
+        self.assertEqual(sorted(codigos(codigo)), esperados)
+
+    def test_exemplo_sem_main(self):
+        codigo = (RAIZ / "exemplos" / "erro_sem_main.arj").read_text(encoding="latin-1")
+        self.assertEqual(codigos(codigo), ["E16"])
+
     def test_expressao_longa_nao_estoura_recursao(self):
         soma = " + ".join(["1"] * 3000)
         self.assertEqual(codigos(main_com(f"int s = {soma};")), [])

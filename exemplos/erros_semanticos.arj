@@ -1,0 +1,163 @@
+func soma(int a, int b): int {
+    return a + b;
+}
+
+func mostra(str msg) {
+    puts(msg);
+}
+
+func e01_variavel_nao_declarada() {
+    y = 1;
+}
+
+func e02_redeclaracao() {
+    int x;
+    float x;
+}
+
+func e03_sombreamento() {
+    int i;
+    for (int i = 0; i < 3; i = i + 1) {
+    }
+}
+
+func e04_atribuicao_incompativel() {
+    int x = 2.5;
+}
+
+func e05_operandos_invalidos() {
+    int x = 5 % 2.0;
+}
+
+func e06_condicao_nao_booleana() {
+    int k = 1;
+    while (k) {
+    }
+}
+
+func e07_funcao_nao_declarada() {
+    calcula(1);
+}
+
+func e08_funcao_duplicada(): int {
+    return 1;
+}
+
+func e08_funcao_duplicada(): int {
+    return 2;
+}
+
+func e09_numero_de_argumentos() {
+    soma(1);
+}
+
+func e10_tipo_de_argumento() {
+    soma(1, 'a');
+}
+
+func e11_valor_vazio_em_expressao() {
+    int x = mostra('a');
+}
+
+func e12_return_com_valor_em_procedimento() {
+    return 1;
+}
+
+func e13_return_sem_valor_em_funcao(): int {
+    return;
+}
+
+func e14_tipo_de_retorno_incompativel(): int {
+    return 2.5;
+}
+
+func e15_pode_terminar_sem_return(int n): int {
+    if (n > 0) {
+        return 1;
+    }
+}
+
+func e19_input_sem_variavel() {
+    int x;
+    input(x + 1);
+}
+
+func e20_switch_sobre_float() {
+    float m = 1.0;
+    switch (m) {
+    }
+}
+
+func e21_case_nao_constante() {
+    int n = 1;
+    int x = 2;
+    switch (n) {
+        case x:
+            break;
+    }
+}
+
+func e22_case_com_tipo_diferente() {
+    int n = 1;
+    switch (n) {
+        case 'a':
+            break;
+    }
+}
+
+func e23_case_repetido() {
+    int n = 1;
+    switch (n) {
+        case 1:
+            break;
+        case 1:
+            break;
+    }
+}
+
+func e24_parametro_repetido(int a, int a) {
+}
+
+func e25_break_fora_de_laco() {
+    break;
+}
+
+func e26_conversao_invalida() {
+    str s = str(1);
+}
+
+func w01_nunca_chamada() {
+}
+
+func w02_divisao_por_zero() {
+    int x = 1;
+    x = x / 0;
+}
+
+func main(int e17_main_com_parametros): str {
+    e01_variavel_nao_declarada();
+    e02_redeclaracao();
+    e03_sombreamento();
+    e04_atribuicao_incompativel();
+    e05_operandos_invalidos();
+    e06_condicao_nao_booleana();
+    e07_funcao_nao_declarada();
+    e08_funcao_duplicada();
+    e09_numero_de_argumentos();
+    e10_tipo_de_argumento();
+    e11_valor_vazio_em_expressao();
+    e12_return_com_valor_em_procedimento();
+    e13_return_sem_valor_em_funcao();
+    e14_tipo_de_retorno_incompativel();
+    e15_pode_terminar_sem_return(1);
+    e19_input_sem_variavel();
+    e20_switch_sobre_float();
+    e21_case_nao_constante();
+    e22_case_com_tipo_diferente();
+    e23_case_repetido();
+    e24_parametro_repetido(1, 2);
+    e25_break_fora_de_laco();
+    e26_conversao_invalida();
+    w02_divisao_por_zero();
+    return 'e18_main_com_retorno_str';
+}
