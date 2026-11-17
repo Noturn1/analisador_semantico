@@ -6,11 +6,13 @@ Uso (a partir da pasta do projeto):
     python3 src/main.py --demo                Analisa um programa embutido
     python3 src/main.py <arquivo> --acoes     Também imprime o traço shift/reduce
     python3 src/main.py <arquivo> --tokens    Também imprime a tabela de tokens
+    python3 src/main.py <arquivo> --ast       Também imprime a árvore sintática abstrata
     python3 src/main.py --help                Exibe esta ajuda
 
 Alternativa: use o atalho `python3 run.py <arquivo>` na raiz do projeto.
 
-Pipeline: arquivo -> Lexer (tokens) -> Parser SLR(1) -> relatório.
+Pipeline: arquivo -> Lexer (tokens) -> Parser SLR(1) -> AST -> relatório.
+A AST só é construída se não houver erros léxicos nem sintáticos.
 
 Códigos de saída:
     0 : análise sintática concluída sem erros (programa ACEITO)
@@ -24,6 +26,7 @@ from pathlib import Path
 from tokens import Token
 from lexer import Lexer, LexerError
 from sintatico import Parser, formatar_arvore
+from arvore import construir_ast, formatar_ast
 from slr import TabelaSLR
 
 
@@ -95,7 +98,8 @@ def imprimir_erros_sintaticos(erros):
 # Pipeline principal
 
 
-def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool) -> int:
+def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool,
+             mostrar_ast: bool = False) -> int:
     # 1. Análise léxica
     lexer = Lexer(codigo)
     tokens = lexer.analisar()
@@ -140,8 +144,18 @@ def analisar(codigo: str, origem: str, mostrar_acoes: bool, mostrar_tokens: bool
         imprimir_erros_sintaticos(resultado.erros)
         print()
 
-    # 4. Veredito
     total_erros = len(lexer.erros) + len(resultado.erros)
+
+    # 4. Árvore sintática abstrata (só para programas sem erros)
+    if total_erros == 0 and resultado.arvore is not None:
+        programa = construir_ast(resultado.arvore)
+        if mostrar_ast:
+            cabecalho("Árvore Sintática Abstrata (AST)")
+            for linha in formatar_ast(programa):
+                print(linha)
+            print()
+
+    # 5. Veredito
     cabecalho("Resultado")
     if resultado.aceito and total_erros == 0:
         print("  ACEITO — programa sintaticamente válido.")
@@ -171,10 +185,12 @@ def main(argv: list[str]) -> int:
 
     mostrar_acoes = "--acoes" in args
     mostrar_tokens = "--tokens" in args
+    mostrar_ast = "--ast" in args
     posicionais = [a for a in args if not a.startswith("--")]
 
     if "--demo" in args:
-        return analisar(CODIGO_DEMO, "<demo embutido>", mostrar_acoes, mostrar_tokens)
+        return analisar(CODIGO_DEMO, "<demo embutido>", mostrar_acoes, mostrar_tokens,
+                        mostrar_ast)
 
     if not posicionais:
         print("Erro: informe um arquivo-fonte ou use --demo.", file=sys.stderr)
@@ -194,7 +210,7 @@ def main(argv: list[str]) -> int:
         print(f"Erro ao ler '{caminho}': {e}", file=sys.stderr)
         return 2
 
-    return analisar(codigo, str(caminho), mostrar_acoes, mostrar_tokens)
+    return analisar(codigo, str(caminho), mostrar_acoes, mostrar_tokens, mostrar_ast)
 
 
 if __name__ == "__main__":
