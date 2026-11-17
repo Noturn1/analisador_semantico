@@ -19,17 +19,32 @@ arquivo é sempre o retrato atual do projeto.
 | Fase | Situação |
 |---|---|
 | 0 — Organização do repositório | ✅ concluída |
-| 1 — Léxico e gramática da Versão B | ⏳ **próxima** |
-| 2 — AST | ⬜ a fazer |
+| 1 — Léxico e gramática da Versão B | ✅ concluída |
+| 2 — AST | ⏳ **próxima** (aguarda decisões pendentes) |
 | 3 — Analisador semântico | ⬜ a fazer |
 | 4 — Gerador de TAC | ⬜ a fazer |
 | 5 — Integração no `main.py` | ⬜ a fazer |
 | 6 — Testes e exemplos | ⬜ a fazer |
 | 7 — Entrega | ⬜ a fazer |
 
-O código atual ainda é o da Parte 2: 73 produções, 125 estados, 0 conflitos.
-`exemplos/ExemploArjanov.arj` é aceito e `exemplos/erros.arj` é rejeitado com
-1 erro léxico e 4 sintáticos.
+O léxico e a gramática já estão na Versão B: 84 produções, 146 estados,
+0 conflitos. `exemplos/ExemploArjanov.arj` (reescrito na nova sintaxe) é
+aceito, o programa da seção 10 da spec é aceito e `exemplos/erros.arj` é
+rejeitado com 1 erro léxico e 4 sintáticos.
+
+### Decisões pendentes (precisam do grupo antes da Fase 2)
+
+Cada item vira uma entrada nova em `DECISOES.md` quando for decidido.
+
+1. **Nome do módulo da AST.** Confirmado na prática: um arquivo `src/ast.py`
+   faz `import dataclasses` falhar (`dataclasses` → `inspect` → `ast` resolve
+   para o nosso arquivo). Opções: `src/arvore.py` (sugerido), `src/ast_arjanov.py`,
+   ou manter `ast.py` sem usar `dataclasses`/`inspect`, o que é frágil.
+2. **Forma dos nós.** `dataclasses` (menos código, `__repr__` pronto) ou
+   classes simples com `__init__` explícito (mais didático, sem mágica).
+3. **Expressões de `for`.** O passo é uma `atribuicao`; representá-lo como nó
+   `Atrib` comum (sugerido) ou como campos soltos (`var`, `expr`) dentro de
+   `For`.
 
 ---
 
@@ -40,29 +55,36 @@ O código atual ainda é o da Parte 2: 73 produções, 125 estados, 0 conflitos.
 - [x] Código-fonte único em `src/` e atalho `run.py` na raiz
 - [x] `docs/DECISOES.md` com as decisões #1 a #12
 
-## Fase 1 — Léxico e gramática da Versão B (≈ 1 dia)
+## Fase 1 — Léxico e gramática da Versão B ✅
 
 Spec, seção 2 e Apêndice A. Decisão #10.
 
-- [ ] `src/token.py`: novos `TokenType` `OP_NOT`, `BREAK`, `DEFAULT` e as
+- [x] `src/token.py`: novos `TokenType` `OP_NOT`, `BREAK`, `DEFAULT` e as
       palavras-chave `NOT`, `break`, `default` em `KEYWORDS`
       (o `lexer.py` não muda: `lookup_keyword` já resolve palavras reservadas)
-- [ ] `src/grammar.py`: transcrever as produções 0 a 83 do Apêndice A
+- [x] `src/grammar.py`: transcrever as produções 0 a 83 do Apêndice A
       (novas ou alteradas: 4–6, 9, 11–13, 25, 50, 54–55, 61–64, 69–73, 83)
-- [ ] `src/parser.py`: nomes legíveis para os novos terminais nas mensagens
-- [ ] Validar: tabela com **146 estados e 0 conflitos**
-- [ ] Validar: o programa da seção 10 da spec é aceito
-- [ ] Atualizar `exemplos/*.arj` para a nova sintaxe (parâmetros tipados)
-- [ ] Atualizar o `--demo` embutido em `src/main.py`
+- [x] `src/parser.py`: nomes legíveis para os novos terminais nas mensagens
+- [x] Validar: tabela com **146 estados e 0 conflitos**
+- [x] Validar: o programa da seção 10 da spec é aceito
+- [x] Atualizar `exemplos/*.arj` para a nova sintaxe (parâmetros tipados)
+- [x] Atualizar o `--demo` embutido em `src/main.py`
 
 **Pronto quando:** `python3 run.py exemplos/ExemploArjanov.arj` aceita o
 exemplo reescrito e a recuperação em modo pânico continua funcionando em
-`exemplos/erros.arj`.
+`exemplos/erros.arj`. ✅
+
+Notas: `exemplos/erros.arj` não precisou mudar (só tem `main()` sem
+parâmetros). O novo `ExemploArjanov.arj` já foi escrito para ser válido
+também nas regras semânticas (sem sombreamento, toda função chamada a partir
+da `main`, `return` em todos os caminhos), para servir de teste positivo nas
+Fases 3 e 6. Ao copiar o programa da seção 10 do PDF, remova o caractere
+form feed (`\f`) da quebra de página, senão o léxico o rejeita.
 
 ## Fase 2 — Árvore sintática abstrata (≈ 1–2 dias)
 
-Decisão #11. Novo módulo `src/ast.py` (cuidado: o nome colide com o módulo
-`ast` da biblioteca padrão; se causar problema, use `src/arvore.py`).
+Decisão #11. Novo módulo da AST; o nome depende da decisão pendente 1 acima
+(`src/ast.py` colide com o módulo `ast` da biblioteca padrão).
 
 - [ ] Classes de nó (sugestão: `dataclasses`), cada uma com `linha` e `coluna`
       do primeiro token da construção:
@@ -167,7 +189,7 @@ na spec.
 
 1. Leia a seção correspondente da spec e as decisões em `docs/DECISOES.md`.
    Os módulos citam as decisões pelo número (ex.: `ver docs/DECISOES.md #5`).
-2. Trabalhe em um branch por fase: `git switch -c fase-1-gramatica`.
+2. Trabalhe em um branch por fase: `git switch -c fase-2-ast`.
 3. Rode os dois exemplos antes de cada commit:
    ```sh
    python3 run.py exemplos/ExemploArjanov.arj   # deve aceitar

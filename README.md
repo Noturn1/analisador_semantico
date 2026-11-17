@@ -62,8 +62,8 @@ A fase semântica seguirá o formato definido na especificação:
 |---|---|---|
 | Análise léxica | `src/lexer.py`, `src/token.py` | ✅ concluída (Parte 1) |
 | Análise sintática SLR(1) | `src/grammar.py`, `src/slr.py`, `src/parser.py` | ✅ concluída (Parte 2) |
-| Léxico e gramática da Versão B | `src/token.py`, `src/grammar.py` | ⏳ próxima etapa |
-| Árvore sintática abstrata | `src/ast.py` | ⬜ planejada |
+| Léxico e gramática da Versão B | `src/token.py`, `src/grammar.py` | ✅ concluída (84 produções, 146 estados, 0 conflitos) |
+| Árvore sintática abstrata | a definir (ver plano) | ⏳ próxima etapa |
 | Análise semântica | `src/semantico.py` | ⬜ planejada |
 | Geração de código de três endereços | `src/tac.py` | ⬜ planejada |
 
@@ -143,8 +143,8 @@ func main(): int {
 | Operadores (menor → maior precedência) | `OR` · `XOR` `XNOR` · `AND` · `NOT` · `== != < > <= >=` · `+ -` · `* / %` · `-`/`+` unários · `^` |
 | Literais | `10`, `2.5`, `'texto'` (aspas simples), `true`, `false` |
 
-> Os exemplos em `exemplos/` ainda usam a sintaxe da Parte 2 (parâmetros sem
-> tipo) e serão atualizados na Fase 1 do plano.
+> Programas no formato da Parte 2 (parâmetros sem tipo, como `func soma(a, b)`)
+> não são mais aceitos. `exemplos/ExemploArjanov.arj` mostra a sintaxe atual.
 
 ## Arquitetura
 
@@ -152,7 +152,7 @@ func main(): int {
 |---|---|
 | `src/token.py` | `TokenType`, palavras reservadas e a classe `Token` |
 | `src/lexer.py` | autômato do léxico, com recuperação em modo pânico |
-| `src/grammar.py` | gramática livre de contexto (produções numeradas) |
+| `src/grammar.py` | gramática livre de contexto da Versão B (84 produções numeradas, Apêndice A da spec) |
 | `src/slr.py` | itens LR(0), CLOSURE/GOTO, FIRST/FOLLOW e tabelas ACTION/GOTO |
 | `src/parser.py` | parser SLR(1) dirigido pela tabela, árvore sintática e recuperação de erros |
 | `src/main.py` | interface de linha de comando e encadeamento das fases |
@@ -194,7 +194,7 @@ A versão entregue na Parte 2 está marcada com a tag `parte-2`
 
 1. Escolha a próxima fase em [`docs/PLANO.md`](docs/PLANO.md) e leia a seção
    correspondente da especificação.
-2. Crie um branch: `git switch -c fase-1-gramatica`.
+2. Crie um branch: `git switch -c fase-2-ast`.
 3. Antes de cada commit, confira que os exemplos se comportam como esperado:
    ```sh
    python3 run.py exemplos/ExemploArjanov.arj   # deve ser aceito
