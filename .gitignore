@@ -21,3 +21,8 @@ venv/
 # Pacote de entrega
 *.zip
 docs/changes/01-fechar-pontos-em-aberto.md
+
+# Outros
+qa-scratch/
+docs/steps/01-semantico-w02-e-interpretacoes.md
+docs/steps/02-tac-inttofloat-intercalado-com-param.md
