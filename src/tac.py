@@ -302,12 +302,11 @@ class GeradorTAC:
             return ""
 
         simbolo = self.funcoes[c.nome]
-        # Todas as conversões antes dos params, para que os params fiquem
-        # contíguos e imediatamente antes do call (docs/PLANO.md, Fase 4).
-        convertidos = [self._widen(a, arg.tipo, tipo_param)
-                       for a, arg, (tipo_param, _) in zip(enderecos, c.args, simbolo.params)]
-        for a in convertidos:
-            self._gen(f"param {a}")
+        # Seção 9.7: param widen(e1...) ; ... ; param widen(en...). O código dos
+        # argumentos já foi gerado; cada inttofloat sai logo antes do param do
+        # seu argumento (docs/DECISOES.md #22).
+        for a, arg, (tipo_param, _) in zip(enderecos, c.args, simbolo.params):
+            self._gen(f"param {self._widen(a, arg.tipo, tipo_param)}")
         n = len(c.args)
         if como_comando:
             self._gen(f"call {c.nome}, {n}")

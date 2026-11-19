@@ -38,6 +38,19 @@ def main_com(corpo: str, antes: str = "") -> str:
     return f"{antes}\nfunc main(): int {{\n{corpo}\n    return 0;\n}}\n"
 
 
+def pos(fonte: str, trecho: str, ocorrencia: int = 1) -> tuple[int, int]:
+    """(linha, coluna), de base 1, do primeiro caractere de 'trecho' no texto.
+
+    A posição esperada de cada diagnóstico sai do texto do programa de teste,
+    e não da saída do compilador."""
+    indice = -1
+    for _ in range(ocorrencia):
+        indice = fonte.index(trecho, indice + 1)
+    linha = fonte.count("\n", 0, indice) + 1
+    coluna = indice - (fonte.rfind("\n", 0, indice) + 1) + 1
+    return linha, coluna
+
+
 class TestErros(unittest.TestCase):
     """Cada caso deve produzir exatamente os códigos esperados."""
 
@@ -149,6 +162,102 @@ class TestRegras(unittest.TestCase):
         decl = programa.funcoes[0].corpo.comandos[0]
         self.assertEqual(decl.expr.tipo, "float")
         self.assertEqual(decl.expr.esq.tipo, "int")
+
+
+class TestInterpretacoes(unittest.TestCase):
+    """Interpretações da Fase 3 em que a spec é omissa, confirmadas em
+    2026-11-19 (docs/PLANO.md, Fase 3; decisão #21)."""
+
+    # Item 1: posição de cada diagnóstico. Cada entrada diz com qual trecho do
+    # programa de TestErros.CASOS o diagnóstico começa: (trecho, ocorrência).
+    POSICOES = {
+        "E01": ("y = 1", 1),
+        "E02": ("float x", 1),            # 2ª declaração
+        "E03": ("int i = 0", 1),          # declaração interna
+        "E04": ("int x = 2.5", 1),
+        "E05": ("5 % 2.0", 1),            # operando esquerdo
+        "E06": ("k)", 1),                 # a condição
+        "E07": ("calcula(1)", 1),         # nome da chamada
+        "E08": ("func soma(int b)", 1),   # 2ª definição
+        "E09": ("soma(1);", 1),
+        "E10": ("'a'", 1),                # o argumento
+        "E11": ("mostra('a')", 1),
+        "E12": ("return 1", 1),
+        "E13": ("return;", 1),
+        "E14": ("return 2.5", 1),
+        "E15": ("func f(int n)", 1),
+        "E16": ("func soma", 1),          # primeira linha do programa
+        "E17": ("func main(int x)", 1),
+        "E18": ("func main(): str", 1),
+        "E19": ("input(x + 1)", 1),
+        "E20": ("m)", 1),                 # a expressão do switch
+        "E21": ("x:", 1),                 # o valor do case
+        "E22": ("'a':", 1),
+        "E23": ("1:", 2),                 # o 2º case 1
+        "E24": ("int a", 2),              # o 2º parâmetro
+        "E25": ("break;", 1),
+        "E26": ("str(1)", 1),
+        "W01": ("func nunca", 1),
+        "W02": ("x / 0", 1),              # operando esquerdo
+    }
+
+    def test_posicao_de_cada_diagnostico(self):
+        self.assertEqual(sorted(self.POSICOES), sorted(TestErros.CASOS))
+        for codigo, (trecho, ocorrencia) in self.POSICOES.items():
+            fonte = TestErros.CASOS[codigo]
+            with self.subTest(codigo=codigo):
+                obtido = [(d.codigo, d.linha, d.coluna)
+                          for d in analisar_codigo(fonte).diagnosticos()]
+                self.assertEqual(obtido, [(codigo, *pos(fonte, trecho, ocorrencia))])
+
+    def test_e09_suprime_e10(self):
+        # Com o número errado de argumentos os tipos não são comparados.
+        prog = main_com("soma('a');", "func soma(int a, int b): int { return a + b; }")
+        self.assertEqual(codigos(prog), ["E09"])
+
+    def test_case_nao_constante_gera_so_e21(self):
+        # 'x' não existe, mas o valor do case não é analisado: nada de E01.
+        self.assertEqual(codigos(main_com("int n = 1; switch (n) { case x: break; }")),
+                         ["E21"])
+
+    def test_funcao_duplicada_primeira_vale_e_segundo_corpo_e_analisado(self):
+        def prog(chamada: str) -> str:
+            return ("func soma(int a): int { return a; }\n"
+                    "func soma(int b, int c): int { return d; }\n"
+                    f"func main() {{ int x = {chamada}; }}")
+        # O corpo da 2ª definição é analisado (E01 em 'd') e a 1ª vale nas
+        # chamadas: 'soma(1)' está certa, 'soma(1, 2)' tem argumentos demais.
+        self.assertEqual(codigos(prog("soma(1)")), ["E08", "E01"])
+        self.assertEqual(codigos(prog("soma(1, 2)")), ["E08", "E01", "E09"])
+
+    def test_apos_e02_fica_a_declaracao_original(self):
+        # 'x' continua int: atribuir 2.5 gera E04.
+        self.assertEqual(codigos(main_com("int x = 1; float x; x = 2.5;")), ["E02", "E04"])
+
+    def test_apos_e03_o_nome_novo_vale_no_escopo_interno(self):
+        # 'i' interno é float: 'i = i + 0.5' não gera E04.
+        prog = main_com("int i = 0; for (float i = 0.0; i < 1.0; i = i + 0.5) { }")
+        self.assertEqual(codigos(prog), ["E03"])
+
+    # Item 4 (W01 omitido quando há E16) já está protegido por CASOS["E16"]: um
+    # programa só com 'soma' teria W01 se o aviso não fosse omitido.
+
+
+class TestAvisoDivisaoPorZero(unittest.TestCase):
+    """W02 e E05 (docs/PLANO.md, Fase 3, item 7; decisão #21)."""
+
+    def test_modulo_por_zero_decimal_so_gera_e05(self):
+        # '%' exige int e int (seção 6.1): o E05 já rejeita o programa, e o
+        # W02 no mesmo nó seria ruído.
+        self.assertEqual(codigos(main_com("int k = 1; int z = k % 0.0;")), ["E05"])
+
+    def test_operando_indefinido_mantem_o_w02(self):
+        # O erro anterior (E01) deixa o operando indefinido; o W02 continua.
+        self.assertEqual(codigos(main_com("int x = y / 0;")), ["E01", "W02"])
+
+    def test_divisor_zero_valido_gera_w02(self):
+        prog = main_com("float f = 1.0; f = f / 0.0; int i = 1; i = i % 0;")
+        self.assertEqual(codigos(prog), ["W02", "W02"])
 
 
 class TestExemplos(unittest.TestCase):

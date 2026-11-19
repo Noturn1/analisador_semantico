@@ -21,8 +21,8 @@ arquivo é sempre o retrato atual do projeto.
 | 0 — Organização do repositório | ✅ concluída |
 | 1 — Léxico e gramática da Versão B | ✅ concluída |
 | 2 — AST | ✅ concluída |
-| 3 — Analisador semântico | ✅ concluída (interpretações a revisar, ver abaixo) |
-| 4 — Gerador de TAC | ✅ concluída (interpretações a revisar, ver abaixo) |
+| 3 — Analisador semântico | ✅ concluída (interpretações confirmadas em 2026-11-19, ver abaixo) |
+| 4 — Gerador de TAC | ✅ concluída (interpretações 2 a 4 a revisar, ver abaixo) |
 | 5 — Integração no `main.py` | ✅ concluída |
 | 6 — Testes e exemplos | ✅ concluída |
 | 7 — Entrega | ⏳ **próxima** |
@@ -121,7 +121,7 @@ Todo `Expr` tem `tipo` (inicialmente `None`). Parênteses não geram nó, e
 
 Spec, seções 3 a 7. Módulo `src/semantico.py`, produzindo erros no
 formato `[Erro Semântico] Linha L, Coluna C: mensagem` e avisos
-`[Aviso Semântico] ...`. Decisões #17 a #19.
+`[Aviso Semântico] ...`. Decisões #17 a #19 e #21.
 
 - [x] Tipos `int`, `float`, `str`, `bool`, `vazio`, `indefinido`; tabela de
       compatibilidade e `widen` (seção 3)
@@ -139,10 +139,11 @@ formato `[Erro Semântico] Linha L, Coluna C: mensagem` e avisos
       deduzidas pelo gerador comparando tipos; ver `precisa_widen`)
 - [x] Impressão da tabela de símbolos (opção `--tabela`)
 
-### Interpretações adotadas onde a spec é omissa (revisar)
+### Interpretações adotadas onde a spec é omissa (confirmadas em 2026-11-19)
 
-Estão implementadas e cobertas por testes, mas podem mudar se o grupo
-preferir outra leitura:
+Estão implementadas, confirmadas e fixadas em testes
+(`TestInterpretacoes` e `TestAvisoDivisaoPorZero`, em `tests/test_semantico.py`;
+decisão #21):
 
 1. **Posição de cada erro** (spec: "primeiro token da construção"):
    E06/E20 na condição/expressão; E10 no argumento; E21–E23 no valor do
@@ -159,7 +160,9 @@ preferir outra leitura:
    mas o corpo da segunda também é analisado (com os próprios parâmetros).
 6. **Após E03**, o novo nome passa a valer no escopo interno; após E02, a
    declaração original é mantida.
-7. **W02** vale para divisor literal `0` e `0.0`, inclusive em `%`.
+7. **W02** vale para divisor literal `0` e `0.0` em `/` e `%`, mas não
+   acompanha um E05 no mesmo nó: `k % 0.0` gera só o E05. Com operando
+   indefinido (erro anterior), o W02 continua saindo (decisão #21).
 
 ### Catálogo de erros e avisos (spec, seção 7)
 
@@ -206,14 +209,17 @@ manda escrever as constantes como no fonte.
 **Pronto quando:** o programa da seção 10 gera **exatamente** o TAC impresso
 na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 
-### Interpretações adotadas onde a spec é omissa (revisar)
+### Interpretações adotadas onde a spec é omissa (item 1 decidido em 2026-11-19; 2 a 4 a revisar)
 
-1. **Ordem de `widen` e `param` nas chamadas.** A spec escreve
-   `param widen(e1, ...) ; ... ; param widen(en, ...)`, o que admite emitir
-   cada `inttofloat` logo antes do seu `param`. Adotado: todas as conversões
-   primeiro e depois os `param` juntos, logo antes do `call`, para que nenhuma
-   instrução fique entre os `param` de uma mesma chamada. O exemplo da seção
-   10 não é afetado.
+1. **Ordem de `widen` e `param` nas chamadas** (decidida em 2026-11-19,
+   decisão #22). A spec escreve `param widen(e1, ...) ; ... ; param
+   widen(en, ...)`. Adotado: o código dos argumentos primeiro e, depois, cada
+   `inttofloat` logo antes do `param` do seu argumento (`param k`,
+   `t3 = inttofloat(r)`, `param t3`). Antes, todos os `inttofloat` saíam antes
+   dos `param`; a diferença só aparece quando um argumento não literal `int`
+   vai para um parâmetro `float` e não é o primeiro. O exemplo da seção 10 não
+   é afetado. **Pendente:** conferir no Anexo de TAC se os `param` de uma
+   chamada precisam ser contíguos; se precisarem, reverter a decisão #22.
 2. **Renomeação com `_`** aplicada só a variáveis e parâmetros, como diz a
    spec. Uma *função* chamada `L1` geraria o rótulo `L1:`, que colide com os
    rótulos internos. Pode-se estender a regra às funções ou deixar como está,

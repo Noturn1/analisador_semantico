@@ -221,3 +221,41 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
 - **Consequências:** a saída padrão mostra o produto final do compilador. As
   demais informações (`--tokens`, `--acoes`, `--arvore`, `--ast`, `--tabela`)
   ficam disponíveis para depuração e para a apresentação.
+
+### #21 — Interpretações da Fase 3 confirmadas; W02 não acompanha o E05
+
+- **Contexto:** a spec manda posicionar cada diagnóstico no "primeiro token da
+  construção" e não define alguns casos (seções 5 e 6; ver `docs/PLANO.md`,
+  Fase 3). Além disso, `k % 0.0` gerava E05 e W02 no mesmo nó.
+- **Decisão:** em 2026-11-19 foram confirmadas como o código já fazia: a
+  posição de cada código (o `func` em E08, E15, E17, E18 e W01; o `return` em
+  E12 a E14; o nome da chamada em E07, E09, E11 e E19; a condição em E06 e
+  E20; o argumento em E10; o valor do `case` em E21 a E23; o operando esquerdo
+  em E05 e W02); E09 suprime E10; `case x:` gera só E21; W01 omitido quando
+  há E16; em função duplicada (E08) a primeira definição vale nas chamadas e o
+  corpo da segunda também é analisado; após E02 fica a declaração original e
+  após E03 entra a nova. O W02 passa a ser emitido só quando a operação é
+  válida ou quando algum operando é indefinido (erro anterior): um E05 no mesmo
+  nó o suprime.
+- **Consequências:** `TestInterpretacoes` fixa cada uma em teste, com a
+  posição esperada calculada pelo texto do programa e não pela saída do
+  compilador. `k % 0.0` passa a gerar só o E05; `int x = y / 0;` continua
+  gerando E01 e W02.
+
+### #22 — `inttofloat` intercalado com `param` nas chamadas
+
+- **Contexto:** a seção 9.7 escreve a chamada como `e1.code ; ... ; en.code`
+  seguido de `param widen(e1.addr, ...) ; ... ; param widen(en.addr, ...)`, e o
+  `widen` (9.1) é quem gera o `inttofloat`. A Fase 4 emitia todos os
+  `inttofloat` antes de qualquer `param`, para manter os `param` contíguos
+  antes do `call`. O exemplo da seção 10 não tem conversão em argumento, então
+  não distinguia as duas leituras.
+- **Decisão:** em 2026-11-19 adotou-se a leitura literal da spec: o código dos
+  argumentos primeiro e, em seguida, para cada argumento, o `inttofloat` (se
+  houver) logo antes do seu `param`.
+- **Consequências:** o TAC só muda quando um argumento não literal `int` vai
+  para um parâmetro `float` e não é o primeiro: `param k`, `t3 =
+  inttofloat(r)`, `param t3`, em vez de `t3 = inttofloat(r)`, `param k`,
+  `param t3`. Pode haver `inttofloat` entre os `param` de uma mesma chamada.
+  Se o Anexo de TAC exigir `param` contíguos, esta decisão deve ser revertida
+  (a mudança está só em `GeradorTAC._emitir_chamada`).

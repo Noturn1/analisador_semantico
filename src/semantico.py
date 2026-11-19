@@ -464,11 +464,15 @@ class AnalisadorSemantico:
     def _tipar_binario(self, b: Binario) -> str:
         te, td, op = b.esq.tipo, b.dir.tipo, b.op
 
-        if op in ("/", "%") and isinstance(b.dir, Literal) \
-                and b.dir.categoria in NUMERICOS and b.dir.valor == 0:
-            self._diag("W02", "divisão por zero", b)
+        divisao_por_zero = (op in ("/", "%") and isinstance(b.dir, Literal)
+                            and b.dir.categoria in NUMERICOS and b.dir.valor == 0)
 
+        # O W02 não acompanha um E05 no mesmo nó (decisão #21): com a operação
+        # inválida o programa já é rejeitado. Com operando indefinido (erro
+        # anterior) o aviso continua saindo.
         if INDEFINIDO in (te, td):
+            if divisao_por_zero:
+                self._diag("W02", "divisão por zero", b)
             return INDEFINIDO
 
         resultado = None
@@ -492,6 +496,8 @@ class AnalisadorSemantico:
         if resultado is None:
             self._diag("E05", f"operador '{op}' não aceita operandos {te} e {td}", b)
             return INDEFINIDO
+        if divisao_por_zero:
+            self._diag("W02", "divisão por zero", b)
         return resultado
 
     def _tipar_unario(self, u: Unario) -> str:

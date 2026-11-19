@@ -20,3 +20,4 @@ venv/
 
 # Pacote de entrega
 *.zip
+docs/changes/01-fechar-pontos-em-aberto.md

@@ -73,6 +73,33 @@ class TestEsquemas(unittest.TestCase):
             "return",
         ])
 
+    def test_inttofloat_intercalado_com_param(self):
+        # Seção 9.7: "param widen(e1...) ; ... ; param widen(en...)". O widen
+        # (9.1) gera o inttofloat, que sai logo antes do param do seu argumento
+        # (docs/DECISOES.md #22).
+        prog = ("func f(int a, float b) { }\n"
+                "func main() { int i = 1; int j = 2; f(i, j); }")
+        self.assertEqual(instrucoes(prog), [
+            "f:", "return",
+            "main:", "i = 1", "j = 2",
+            "param i", "t1 = inttofloat(j)", "param t1", "call f, 2",
+            "return",
+        ])
+
+    def test_codigo_dos_argumentos_vem_antes_de_qualquer_param(self):
+        # Seção 9.7: "e1.code ; ... ; en.code" precede os param.
+        prog = ("func g(int x): int { return x; }\n"
+                "func f(int a, float b) { }\n"
+                "func main() { int i = 1; int j = 2; f(g(i), j); }")
+        self.assertEqual(instrucoes(prog), [
+            "g:", "return x",
+            "f:", "return",
+            "main:", "i = 1", "j = 2",
+            "param i", "t1 = call g, 1",
+            "param t1", "t2 = inttofloat(j)", "param t2", "call f, 2",
+            "return",
+        ])
+
     def test_condicao_composta_usa_ifFalse_do_endereco(self):
         prog = "func main() { int a = 1; if (a > 0 AND a < 5) { a = 2; } }"
         self.assertEqual(instrucoes(prog), [
