@@ -300,3 +300,17 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   identificador (`x²`) continua aceito, porque a continuação do identificador
   usa `isalnum()`; `²x` é erro. Os testes estão em `tests/test_lexer.py` e em
   `tests/test_leitura.py`.
+
+### #25 — Função com nome de rótulo interno: mantida como limitação conhecida
+
+- **Contexto:** a regra do `_` (seção 8 da spec) vale só para variáveis e
+  parâmetros, e funções usam o próprio nome como rótulo. Uma função chamada
+  `L1` gera o rótulo `L1:` junto com o rótulo interno `L1:` de um `if` ou laço
+  do mesmo TAC, e uma função `t1` tem o mesmo nome de um temporário.
+- **Decisão:** em 2026-11-19 manteve-se como está. A alternativa, aplicar o `_`
+  também aos nomes de função, foi descartada: exigiria uma frase na seção 8 da
+  spec e o caso é raro.
+- **Consequências:** um programa com uma função cujo nome case com
+  `_*(t|L)[0-9]+` pode gerar TAC ambíguo (rótulos duplicados), sem erro nem
+  aviso. Se for preciso depois, basta aplicar `endereco_variavel` ao rótulo da
+  função e aos `call` em `src/tac.py`.

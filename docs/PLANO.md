@@ -22,7 +22,7 @@ arquivo é sempre o retrato atual do projeto.
 | 1 — Léxico e gramática da Versão B | ✅ concluída |
 | 2 — AST | ✅ concluída |
 | 3 — Analisador semântico | ✅ concluída (interpretações confirmadas em 2026-11-19, ver abaixo) |
-| 4 — Gerador de TAC | ✅ concluída (interpretações 2 a 4 a revisar, ver abaixo) |
+| 4 — Gerador de TAC | ✅ concluída (interpretações resolvidas em 2026-11-19, ver abaixo) |
 | 5 — Integração no `main.py` | ✅ concluída |
 | 6 — Testes e exemplos | ✅ concluída |
 | 7 — Entrega | ⏳ **próxima** |
@@ -209,7 +209,7 @@ manda escrever as constantes como no fonte.
 **Pronto quando:** o programa da seção 10 gera **exatamente** o TAC impresso
 na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 
-### Interpretações adotadas onde a spec é omissa (item 1 decidido em 2026-11-19; 2 a 4 a revisar)
+### Interpretações adotadas onde a spec é omissa (todas resolvidas em 2026-11-19)
 
 1. **Ordem de `widen` e `param` nas chamadas** (decidida em 2026-11-19,
    decisão #22). A spec escreve `param widen(e1, ...) ; ... ; param
@@ -221,13 +221,23 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
    é afetado. **Pendente:** conferir no Anexo de TAC se os `param` de uma
    chamada precisam ser contíguos; se precisarem, reverter a decisão #22.
 2. **Renomeação com `_`** aplicada só a variáveis e parâmetros, como diz a
-   spec. Uma *função* chamada `L1` geraria o rótulo `L1:`, que colide com os
-   rótulos internos. Pode-se estender a regra às funções ou deixar como está,
-   porque é um caso raro.
-3. **Formato:** instruções recuadas com 4 espaços, rótulos na coluna zero e
-   uma linha em branco entre funções. O arquivo de `-o` é gravado em UTF-8.
-4. **Sem otimizações:** o `goto` que segue um `break` (código morto) é
-   mantido, porque é o que os esquemas da seção 9 produzem.
+   spec. Mantida assim, como limitação conhecida (decidido em 2026-11-19,
+   decisão #25): uma *função* chamada `L1` gera o rótulo `L1:` e, no mesmo
+   TAC, o rótulo interno `L1:` de um `if` ou laço, e `ifFalse ... goto L1`
+   fica ambíguo. A spec não cobre o caso. A alternativa descartada era aplicar
+   a regra do `_` aos nomes de função (`_L1:` e `call _L1, 1`), o que pediria
+   uma frase na seção 8 da spec.
+3. **Formato** (confirmado pela spec em 2026-11-19): instruções recuadas com 4
+   espaços, rótulos na coluna zero e uma linha em branco entre funções. A
+   seção 8 manda os rótulos na coluna zero e o exemplo da seção 10 mostra
+   instruções recuadas e uma linha em branco entre funções; o número de
+   espaços não é definido. O arquivo de `-o` é gravado em UTF-8; no Windows as
+   quebras de linha saem como CRLF, porque o arquivo é aberto em modo texto.
+4. **Sem otimizações** (confirmado pela spec em 2026-11-19): o `goto` que
+   segue um `break` (código morto) é mantido, porque é o que os esquemas da
+   seção 9 produzem. A seção 8 só autoriza duas dobras de constante, o
+   exemplo da seção 10 mantém `ifFalse true goto L3` sem otimizar e a 9.6 diz
+   que o `goto Lfim` é obrigatório.
 
 ## Fase 5 — Integração no `main.py` ✅
 
