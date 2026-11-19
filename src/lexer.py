@@ -21,6 +21,17 @@ Ajuste da Parte 2 (ver docs/DECISOES.md #9):
 
 from tokens import Token, TokenType, lookup_keyword
 
+
+def _eh_digito(c: str) -> bool:
+    """True para os dígitos '0' a '9'.
+
+    str.isdigit() também aceita dígitos de outros alfabetos e sobrescritos
+    (como '²'), que não fazem parte da linguagem e derrubariam a conversão do
+    literal (docs/DECISOES.md #24).
+    """
+    return "0" <= c <= "9"
+
+
 # Erro Léxico
 
 
@@ -146,7 +157,7 @@ class Lexer:
         c = self._atual()
 
         # Dígito => número (inteiro ou decimal)
-        if c.isdigit():
+        if _eh_digito(c):
             self._ler_numero(linha_ini, col_ini)
             return
 
@@ -173,16 +184,16 @@ class Lexer:
         """
         inicio = self.pos
 
-        # parte inteira (sempre existe, pois só entramos aqui se c.isdigit())
-        while not self._fim() and self._atual().isdigit():
+        # parte inteira (sempre existe, pois só entramos aqui se _eh_digito(c))
+        while not self._fim() and _eh_digito(self._atual()):
             self._avancar()
 
         tipo = TokenType.INTEIRO
 
         # parte fracionária (opcional; precisa de '.' + pelo menos um dígito)
-        if self._atual() == "." and self._proximo().isdigit():
+        if self._atual() == "." and _eh_digito(self._proximo()):
             self._avancar()  # consome o '.'
-            while not self._fim() and self._atual().isdigit():
+            while not self._fim() and _eh_digito(self._atual()):
                 self._avancar()
             tipo = TokenType.DECIMAL
 

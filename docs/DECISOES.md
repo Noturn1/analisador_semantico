@@ -64,7 +64,8 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
 
 ### #6 — Leitura do código-fonte em Latin-1
 
-- **Decisão:** o arquivo-fonte é lido com codificação `latin-1`.
+- **Decisão:** o arquivo-fonte é lido com codificação `latin-1`. (Revisada
+  pela decisão #23: UTF-8 primeiro, com `latin-1` de reserva.)
 - **Consequências:** qualquer sequência de bytes é decodificável, então a
   leitura nunca falha por codificação; caracteres fora do alfabeto da
   linguagem são reportados como erro léxico.
@@ -259,3 +260,43 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   `param t3`. Pode haver `inttofloat` entre os `param` de uma mesma chamada.
   Se o Anexo de TAC exigir `param` contíguos, esta decisão deve ser revertida
   (a mudança está só em `GeradorTAC._emitir_chamada`).
+
+### #23 — Leitura do arquivo-fonte: BOM descartado, UTF-8 primeiro, latin-1 de reserva
+
+- **Contexto:** a #6 lia sempre em `latin-1`. Um arquivo UTF-8 com BOM gerava 3
+  erros falsos na linha 1 e era rejeitado. Um acento dentro de uma string saía
+  como `MÃ©dia` no TAC e no arquivo de `-o` (duplamente codificado), sem erro
+  nenhum, e cada acento deslocava em 1 a coluna dos diagnósticos seguintes na
+  mesma linha. Os exemplos e os testes eram só ASCII e não mostravam isso.
+- **Decisão:** em 2026-11-19, `decodificar_fonte` (em `src/main.py`) descarta o
+  BOM UTF-8, se houver, e lê como UTF-8. Se o arquivo não for UTF-8 válido, lê
+  como `latin-1`, que decodifica qualquer sequência de bytes e mantém a
+  garantia da #6 de que a leitura nunca falha por codificação.
+- **Consequências:** strings com acento saem certas no TAC, as colunas contam
+  caracteres e arquivos em `latin-1` continuam aceitos (`tests/test_leitura.py`).
+  Com o texto decodificado como UTF-8, o léxico, que usa `isalpha()` e
+  `isalnum()` (a definição regular documentada nele é só ASCII), passa a aceitar
+  letras acentuadas em identificadores (`média`), como já fazia com arquivos em
+  `latin-1`. **Limitações conhecidas:** o dígito não ASCII fora de string (por
+  exemplo `²`), que derrubava o compilador com `ValueError` em `arvore.py` e já
+  ocorria com o byte `b2` em `latin-1`, foi tratado na decisão #24. UTF-16
+  (por exemplo, arquivos gravados por `>` no PowerShell 5.1 com certas opções)
+  também não é tratado.
+
+### #24 — Dígitos do léxico são só ASCII
+
+- **Contexto:** o léxico usava `str.isdigit()`, que aceita dígitos de outros
+  alfabetos e sobrescritos. Com o fonte decodificado como UTF-8 (#23), um `²`
+  fora de string virava um literal inteiro e derrubava o compilador com
+  `ValueError` em `arvore.py` (`int('²')`), e um dígito como `٣` era aceito como
+  número. A definição regular documentada no léxico é `digito = [0-9]`.
+- **Decisão:** em 2026-11-19, `_eh_digito` (em `src/lexer.py`) aceita só `0` a
+  `9`, no início do número, na parte inteira, depois do `.` e na parte
+  fracionária. Qualquer outro caractere vira erro léxico ("Caractere não
+  reconhecido"). Letras acentuadas em identificadores continuam aceitas:
+  `isalpha()` e `isalnum()` não mudaram.
+- **Consequências:** `int x = ²;` gera 1 erro léxico e saída 1, e `12²` vira o
+  inteiro `12` seguido de um erro. Um dígito não ASCII no meio de um
+  identificador (`x²`) continua aceito, porque a continuação do identificador
+  usa `isalnum()`; `²x` é erro. Os testes estão em `tests/test_lexer.py` e em
+  `tests/test_leitura.py`.

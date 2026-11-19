@@ -27,6 +27,7 @@ Códigos de saída:
     2 : erro de argumentos ou de E/S (arquivo não encontrado etc.)
 """
 
+import codecs
 import sys
 from pathlib import Path
 
@@ -102,6 +103,22 @@ def imprimir_erros_sintaticos(erros):
     cabecalho(f"Erros Sintáticos: {len(erros)}")
     for e in erros:
         print(f"  Linha {e.linha}, Coluna {e.coluna}: {e.mensagem}")
+
+
+# Leitura do arquivo-fonte
+
+
+def decodificar_fonte(dados: bytes) -> str:
+    """Decodifica os bytes de um arquivo-fonte (docs/DECISOES.md #23).
+
+    Descarta o BOM UTF-8, se houver, e lê como UTF-8. Se o arquivo não for UTF-8
+    válido, lê como latin-1, que decodifica qualquer sequência de bytes."""
+    if dados.startswith(codecs.BOM_UTF8):
+        dados = dados[len(codecs.BOM_UTF8):]
+    try:
+        return dados.decode("utf-8")
+    except UnicodeDecodeError:
+        return dados.decode("latin-1")
 
 
 # Pipeline principal
@@ -269,7 +286,7 @@ def main(argv: list[str]) -> int:
         return 2
 
     try:
-        codigo = caminho.read_text(encoding="latin-1")
+        codigo = decodificar_fonte(caminho.read_bytes())
     except OSError as e:
         print(f"Erro ao ler '{caminho}': {e}", file=sys.stderr)
         return 2
