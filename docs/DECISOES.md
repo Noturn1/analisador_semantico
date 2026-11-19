@@ -60,7 +60,8 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
 - **Consequências:** sincronizar primeiro em `comando` descarta apenas o
   comando defeituoso e evita cascatas de erros espúrios. Uma guarda de
   progresso força o descarte de um token quando o erro se repete na mesma
-  posição, garantindo terminação.
+  posição, garantindo terminação. (Complementada pela decisão #27: o erro
+  repetido no mesmo token não é registrado de novo.)
 
 ### #6 — Leitura do código-fonte em Latin-1
 
@@ -333,3 +334,22 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   em `tests/test_semantico.py`. Para tirar a ambiguidade do PDF, a frase da 6.6
   poderia ficar "que deve ser uma variável (E19); se não estiver declarada,
   E01" (o PDF é do grupo e a fonte dele não está no repositório).
+
+### #27 — Um erro sintático por token
+
+- **Contexto:** na recuperação em modo pânico (#5), quando o token com erro já
+  está no FOLLOW do ponto de sincronia, ele não é descartado. O parser retomava,
+  errava no mesmo token e o registrava de novo; a guarda de progresso só o
+  descartava depois disso. O mesmo erro saía duas vezes na mesma posição (`}` a
+  mais, `case` fora de `switch`, fim de arquivo, texto depois da última função,
+  entre outros), em cerca de 46% das variações aleatórias de programas válidos.
+- **Decisão:** em 2026-11-19, `_registrar_erro` (em `src/sintatico.py`) ignora um
+  erro quando o token corrente é o mesmo do último erro registrado
+  (`_indice_ultimo_erro`). A recuperação e a guarda de progresso não mudaram.
+- **Consequências:** cada token com erro aparece uma vez, com a mensagem do
+  primeiro erro. Como só o registro mudou, o traço de ações, a árvore e o
+  veredito são os mesmos de antes (comparado com a versão anterior em 50.000
+  variações aleatórias). Dois comandos defeituosos seguem sendo dois erros. As
+  cascatas em tokens diferentes não foram tratadas: um `)` esquecido numa
+  condição ainda gera 3 erros, porque a recuperação fecha a função no `}` do
+  bloco. Os testes estão em `tests/test_sintatico.py`.

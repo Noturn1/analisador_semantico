@@ -117,6 +117,7 @@ class Parser:
         self.pilha_nos: list[NoArvore] = []
 
         self.resultado = ResultadoParser()
+        self._indice_ultimo_erro = -1  # índice do token do último erro registrado
         self._pos_ultima_recuperacao = -1
 
     # -- utilidades de posição ---------------------------------------------
@@ -201,6 +202,13 @@ class Parser:
     # -- registro de erros --------------------------------------------------
 
     def _registrar_erro(self, mensagem: str, tok: Token):
+        # Um token com erro é registrado uma vez só (docs/DECISOES.md #27): se a
+        # recuperação não o descartou, o parser erra nele de novo, e esse segundo
+        # erro é o mesmo defeito. A guarda de _recuperar descarta o token na
+        # volta seguinte.
+        if self.i == self._indice_ultimo_erro:
+            return
+        self._indice_ultimo_erro = self.i
         self.resultado.erros.append(ErroSintatico(mensagem, tok.linha, tok.coluna))
 
     def _registrar_erro_sintatico(self, estado: int, tok: Token, simbolo: str):
