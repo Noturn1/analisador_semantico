@@ -260,6 +260,45 @@ class TestAvisoDivisaoPorZero(unittest.TestCase):
         self.assertEqual(codigos(prog), ["W02", "W02"])
 
 
+class TestInput(unittest.TestCase):
+    """Argumento de input: quantidade (E09), tipo de argumento (E19) e
+    declaração (E01), seção 6.6 da spec e decisão #26."""
+
+    # corpo da main -> códigos esperados, na ordem das posições (decisão #17)
+    CASOS = {
+        "input();": ["E09"],
+        "int a; int b; input(a, b);": ["E09"],
+        "input(2, 3);": ["E09"],             # a contagem vem antes: sem E19
+        "input(2);": ["E19"],
+        "input('a');": ["E19"],
+        "input(true);": ["E19"],
+        "int x = 1; input(x + 1);": ["E19"],
+        "input(zz);": ["E01"],               # variável escrita e não declarada
+        "input(zz + 1);": ["E19", "E01"],    # dois erros: o argumento e o nome
+        "int x; input((x));": [],            # parênteses em volta da variável
+        "int x; input(x);": [],
+    }
+
+    def test_codigo_de_cada_argumento(self):
+        for corpo, esperado in self.CASOS.items():
+            with self.subTest(corpo=corpo):
+                self.assertEqual(codigos(main_com(corpo)), esperado)
+
+    def test_posicao_do_diagnostico(self):
+        # E09 e E19 ficam no nome da chamada; o E01 fica no nome da variável.
+        esperado = {
+            "input();": ("E09", "input()"),
+            "input(2);": ("E19", "input(2)"),
+            "input(zz);": ("E01", "zz"),
+        }
+        for corpo, (codigo, trecho) in esperado.items():
+            fonte = main_com(corpo)
+            with self.subTest(corpo=corpo):
+                obtido = [(d.codigo, d.linha, d.coluna)
+                          for d in analisar_codigo(fonte).diagnosticos()]
+                self.assertEqual(obtido, [(codigo, *pos(fonte, trecho))])
+
+
 class TestExemplos(unittest.TestCase):
     def test_exemplo_valido_sem_diagnosticos(self):
         codigo = (RAIZ / "exemplos" / "ExemploArjanov.arj").read_text(encoding="latin-1")

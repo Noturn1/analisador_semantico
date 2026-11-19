@@ -314,3 +314,22 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   `_*(t|L)[0-9]+` pode gerar TAC ambíguo (rótulos duplicados), sem erro nem
   aviso. Se for preciso depois, basta aplicar `endereco_variavel` ao rótulo da
   função e aos `call` em `src/tac.py`.
+
+### #26 — Argumento de `input`: E09, E19 e E01
+
+- **Contexto:** a seção 6.6 da spec diz que `input(v)` recebe "exatamente 1
+  argumento (E09), que deve ser uma variável declarada (E19)". O catálogo chama
+  o E19 de "input sem variável" (exemplo `input(x + 1);`) e a regra 9 da seção 4
+  manda E01 para todo uso de variável não declarada. A spec não diz qual dos três
+  vale para `input()`, `input(2)` e `input(zz)`.
+- **Decisão:** em 2026-11-19, cada código olha uma coisa. E09: a quantidade de
+  argumentos (`input()`, `input(a, b)`). E19: com um único argumento, ele não é
+  uma variável (`input(2)`, `input('a')`, `input(x + 1)`, `input(g())`). E01: a
+  variável escrita não existe (`input(zz)`).
+- **Consequências:** `input(2, 3)` gera só E09, porque a contagem vem antes.
+  `input(zz + 1)` gera E19 e E01, dois erros diferentes. `input((x))` é
+  aceito: parênteses em volta de uma variável não geram E19. E09 e E19 ficam no
+  nome da chamada e o E01 no nome da variável. Os testes estão em `TestInput`,
+  em `tests/test_semantico.py`. Para tirar a ambiguidade do PDF, a frase da 6.6
+  poderia ficar "que deve ser uma variável (E19); se não estiver declarada,
+  E01" (o PDF é do grupo e a fonte dele não está no repositório).

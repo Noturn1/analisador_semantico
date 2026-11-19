@@ -142,8 +142,8 @@ formato `[Erro Semântico] Linha L, Coluna C: mensagem` e avisos
 ### Interpretações adotadas onde a spec é omissa (confirmadas em 2026-11-19)
 
 Estão implementadas, confirmadas e fixadas em testes
-(`TestInterpretacoes` e `TestAvisoDivisaoPorZero`, em `tests/test_semantico.py`;
-decisão #21):
+(`TestInterpretacoes`, `TestAvisoDivisaoPorZero` e `TestInput`, em `tests/test_semantico.py`;
+decisões #21 e #26):
 
 1. **Posição de cada erro** (spec: "primeiro token da construção"):
    E06/E20 na condição/expressão; E10 no argumento; E21–E23 no valor do
@@ -163,6 +163,9 @@ decisão #21):
 7. **W02** vale para divisor literal `0` e `0.0` em `/` e `%`, mas não
    acompanha um E05 no mesmo nó: `k % 0.0` gera só o E05. Com operando
    indefinido (erro anterior), o W02 continua saindo (decisão #21).
+8. **`input`** (decisão #26): E09 pela quantidade de argumentos, E19 quando o
+   único argumento não é uma variável (`input(2)`), E01 quando a variável não
+   está declarada (`input(zz)`). `input((x))` é aceito.
 
 ### Catálogo de erros e avisos (spec, seção 7)
 
