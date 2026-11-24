@@ -299,6 +299,12 @@ class TestInput(unittest.TestCase):
                 self.assertEqual(obtido, [(codigo, *pos(fonte, trecho))])
 
 
+class TestFuncaoDuplicada(unittest.TestCase):
+    def test_parametro_repetido_na_segunda_definicao(self):
+        fonte = main_com("f();", "func f() { }\nfunc f(int a, int a) { }")
+        self.assertEqual(codigos(fonte), ["E08", "E24"])
+
+
 class TestExemplos(unittest.TestCase):
     def test_exemplo_valido_sem_diagnosticos(self):
         codigo = (RAIZ / "exemplos" / "ExemploArjanov.arj").read_text(encoding="latin-1")

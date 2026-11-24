@@ -2,7 +2,7 @@
 
 Roteiro para concluir o compilador Arjanov: análise semântica e geração de
 código de três endereços (TAC). A referência normativa é
-[`Especificacao_Semantica_Arjanov_v2.pdf`](Especificacao_Semantica_Arjanov_v2.pdf)
+[`Especificacao_Semantica_Arjanov_v3.pdf`](Especificacao_Semantica_Arjanov_v3.pdf)
 (a "spec"); as decisões já tomadas estão em [`DECISOES.md`](DECISOES.md).
 
 - **Prazo de entrega:** 02/12, 23:59
@@ -25,7 +25,7 @@ arquivo é sempre o retrato atual do projeto.
 | 4 — Gerador de TAC | ✅ concluída (interpretações resolvidas em 2026-11-19, ver abaixo) |
 | 5 — Integração no `main.py` | ✅ concluída |
 | 6 — Testes e exemplos | ✅ concluída |
-| 7 — Entrega | ⏳ **próxima** |
+| 7 — Entrega | ✅ concluída |
 
 O léxico e a gramática já estão na Versão B: 84 produções, 146 estados,
 0 conflitos. `exemplos/ExemploArjanov.arj` (reescrito na nova sintaxe) é
@@ -221,8 +221,8 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
    `t3 = inttofloat(r)`, `param t3`). Antes, todos os `inttofloat` saíam antes
    dos `param`; a diferença só aparece quando um argumento não literal `int`
    vai para um parâmetro `float` e não é o primeiro. O exemplo da seção 10 não
-   é afetado. **Pendente:** conferir no Anexo de TAC se os `param` de uma
-   chamada precisam ser contíguos; se precisarem, reverter a decisão #22.
+   é afetado. Conferido no Anexo em 2026-11-24: os `param` não
+   precisam ser contíguos (decisão #30).
 2. **Renomeação com `_`** aplicada só a variáveis e parâmetros, como diz a
    spec. Mantida assim, como limitação conhecida (decidido em 2026-11-19,
    decisão #25): uma *função* chamada `L1` gera o rótulo `L1:` e, no mesmo
@@ -241,6 +241,9 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
    seção 9 produzem. A seção 8 só autoriza duas dobras de constante, o
    exemplo da seção 10 mantém `ifFalse true goto L3` sem otimizar e a 9.6 diz
    que o `goto Lfim` é obrigatório.
+
+> **Atualização (2026-11-24):** o formato desta fase foi substituído pelo da Berti
+> VM, usada na avaliação (decisões #30 a #34). O item 2 acima deixou de valer.
 
 ## Fase 5 — Integração no `main.py` ✅
 
@@ -273,11 +276,16 @@ fica numa função com o nome do código (`e01_variavel_nao_declarada`, ...),
 chamada pela `main` para não gerar W01 extra. E17 e E18 estão na própria
 `main` (`func main(int ...): str`).
 
-## Fase 7 — Entrega (≈ 1 dia)
+## Fase 7 — Entrega ✅
 
-- [ ] Fechar a seção 12 da spec e atualizar o PDF se alguma decisão mudar
-- [ ] Revisar o `README.md`
-- [ ] Montar o `.zip` com a spec, `src/` e `exemplos/`
+- [x] Fechar a seção 12 da spec e atualizar o PDF (v3, decisão #29)
+- [x] Revisar o `README.md`
+- [x] Montar o `.zip` com a spec, `src/` e `exemplos/` (mais `run.py`, `tests/`
+      e `README.md`); não é versionado, ver `.gitignore`
+- [x] Revisão final: E24 em função duplicada (decisão #28) e
+      `ExemploArjanov.arj` ampliado (conversão em argumento e `return`, `switch`
+      sobre `str` e `bool`, fallthrough com corpo, valores padrão)
+- [x] TAC executável na Berti VM (decisões #30 a #34), com `tests/test_vm.py`
 
 ---
 

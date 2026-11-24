@@ -10,7 +10,7 @@
   <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white">
   <img alt="Sem dependências" src="https://img.shields.io/badge/depend%C3%AAncias-nenhuma-brightgreen">
   <img alt="Parser SLR(1)" src="https://img.shields.io/badge/parser-SLR(1)-blueviolet">
-  <img alt="Status" src="https://img.shields.io/badge/status-Parte%203%20em%20andamento-orange">
+  <img alt="Status" src="https://img.shields.io/badge/status-Parte%203%20conclu%C3%ADda-brightgreen">
 </p>
 
 ---
@@ -69,14 +69,13 @@ impresso por padrão. Trecho do exemplo da seção 10 da especificação:
 
 ```
 media:
-    t4 = inttofloat(a)
-    t5 = t4 + b
+    t4 = inttofloat(media.a)
+    t5 = t4 + media.b
     t6 = t5 / 2.0
     return t6
 
 mostra:
-    param msg
-    call puts, 1
+    print mostra.msg
     return
 ```
 
@@ -89,8 +88,9 @@ mostra:
 | Léxico e gramática da Versão B | `src/tokens.py`, `src/grammar.py` | ✅ concluída (84 produções, 146 estados, 0 conflitos) |
 | Árvore sintática abstrata | `src/arvore.py` | ✅ concluída |
 | Análise semântica | `src/semantico.py` | ✅ concluída (E01–E26, W01–W02) |
-| Geração de código de três endereços | `src/tac.py` | ✅ concluída (idêntico ao exemplo da spec) |
+| Geração de código de três endereços | `src/tac.py` | ✅ concluída (executa na Berti VM) |
 | Testes e exemplos finais | `tests/`, `exemplos/` | ✅ concluída |
+| Entrega | `docs/`, pacote `.zip` | ✅ concluída |
 
 O roteiro detalhado, com checklists por fase, está em
 **[`docs/PLANO.md`](docs/PLANO.md)**.
@@ -131,6 +131,25 @@ Resultado
   REJEITADO — foram encontrados erros.
   Léxicos: 1 | Sintáticos: 4
 ```
+
+### Executar o TAC na Berti VM
+
+O código gerado roda sem alterações na
+[Berti VM](https://github.com/phoberti/bertol-compilador-vm), usada na avaliação:
+
+```sh
+docker run -d --name bertol -p 8080:80 phoberti/bertol:1.0   # a tag latest não existe
+python3 run.py exemplos/ExemploArjanov.arj -o saida.tac
+```
+
+1. Abra <http://localhost:8080/berti-vm/>.
+2. Cole o conteúdo de `saida.tac` no painel **Entrada TAC** e clique em
+   **Carregar programa**.
+3. Execute com **Step**, **Run** ou **Instantâneo**. Em cada `read`, digite o valor
+   e clique em **Enviar** (`bool`: `true`/`1` ou `false`/`0`).
+
+Para parar e voltar a usar: `docker stop bertol` e `docker start bertol`. Sem
+Docker, basta abrir o `Berti VM/index.html` do repositório da VM no navegador.
 
 ## A linguagem Arjanov
 
@@ -213,7 +232,9 @@ Alguns princípios do projeto, detalhados em [`docs/DECISOES.md`](docs/DECISOES.
 └── docs/
     ├── PLANO.md                                plano de implementação da Parte 3
     ├── DECISOES.md                             registro de decisões de projeto
-    └── Especificacao_Semantica_Arjanov_v2.pdf  especificação semântica e do TAC
+    ├── Especificacao_Semantica_Arjanov_v3.pdf  especificação semântica e do TAC
+    ├── Especificacao_Semantica_Arjanov_v3.docx fonte editável da v3
+    └── Especificacao_Semantica_Arjanov_v2.pdf  versão anterior (histórico)
 ```
 
 A versão entregue na Parte 2 está marcada com a tag `parte-2`
@@ -223,14 +244,14 @@ A versão entregue na Parte 2 está marcada com a tag `parte-2`
 
 | Documento | Conteúdo |
 |---|---|
-| [`docs/PLANO.md`](docs/PLANO.md) | o que falta fazer, fase por fase, com checklists |
+| [`docs/PLANO.md`](docs/PLANO.md) | o plano da Parte 3, fase por fase, com checklists |
 | [`docs/DECISOES.md`](docs/DECISOES.md) | por que o compilador é como é; os módulos citam as entradas pelo número |
-| [`docs/Especificacao_Semantica_Arjanov_v2.pdf`](docs/Especificacao_Semantica_Arjanov_v2.pdf) | sistema de tipos, escopos, catálogo de erros (E01–E26, W01–W02), esquemas de TAC e gramática da Versão B |
+| [`docs/Especificacao_Semantica_Arjanov_v3.pdf`](docs/Especificacao_Semantica_Arjanov_v3.pdf) | sistema de tipos, escopos, catálogo de erros (E01–E26, W01–W02), esquemas de TAC e gramática da Versão B |
 
 ## Como contribuir
 
-1. Escolha a próxima fase em [`docs/PLANO.md`](docs/PLANO.md) e leia a seção
-   correspondente da especificação.
+1. Leia a seção correspondente da especificação e o plano em
+   [`docs/PLANO.md`](docs/PLANO.md).
 2. Crie um branch a partir da `main` atualizada: `git switch -c fase-7-entrega`.
 3. Antes de cada commit, rode os testes e confira os exemplos:
    ```sh

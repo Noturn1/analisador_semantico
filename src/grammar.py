@@ -7,7 +7,7 @@ de expressão usam os terminais *agrupados* do analisador léxico
 OP_XOR, OP_NOT) em vez de um terminal por operador. Assim, o alfabeto de
 terminais do parser coincide com os TokenType do léxico.
 
-As produções seguem o Apêndice A de docs/Especificacao_Semantica_Arjanov_v2.pdf
+As produções seguem o Apêndice A de docs/Especificacao_Semantica_Arjanov_v3.pdf
 (Versão B, docs/DECISOES.md #10): 84 produções (0..83), 146 estados, 0 conflitos.
 
 Representação:

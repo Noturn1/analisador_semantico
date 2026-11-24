@@ -14,6 +14,30 @@ func mostra(str msg) {
     puts(msg);
 }
 
+func dobro(int n): float {
+    return n * 2;
+}
+
+func sinal(int n): int {
+    if (n < 0) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+func avalia(str nota) {
+    switch (nota) {
+        case 'A':
+            puts('excelente');
+        case 'B':
+            puts('aprovado');
+            break;
+        default:
+            puts('reprovado');
+    }
+}
+
 func classifica(int n): int {
     if (n > 0) {
         mostra('positivo');
@@ -35,6 +59,9 @@ func fat(int n): int {
 func main(): int {
     int contador;
     float m = 0.0;
+    float padrao_float;
+    str padrao_str;
+    bool padrao_bool;
     str nome = 'Arjanov';
     bool ativo = true;
 
@@ -49,6 +76,9 @@ func main(): int {
     bool b7 = contador <= 10 AND contador >= 1;
     bool b8 = NOT ativo;
     bool b9 = NOT contador == 10;
+    bool b10 = nome == 'Arjanov' AND padrao_str != nome;
+    bool b11 = ativo != padrao_bool;
+    bool b12 = contador == 10.0;
 
     int neg = -contador;
     int pos = +contador;
@@ -78,6 +108,8 @@ func main(): int {
     m = media(contador, 2.5);
     int truncado = int(m) + fat(3);
     float real = float(truncado) / 2;
+    padrao_float = contador;
+    m = media(1, contador) + dobro(sinal(contador));
 
     puts('Nome: ');
     puts(nome);
@@ -105,6 +137,25 @@ func main(): int {
             break;
         default:
             mostra('outro');
+    }
+
+    avalia('A');
+    avalia(nome);
+
+    switch (ativo) {
+        case true:
+            int local = 1;
+            puts(local);
+            break;
+        case false:
+            float local = 2.5;
+            puts(local);
+    }
+
+    for (int i = 0; i < 10; i = i + 1) {
+        if (i == 2) {
+            break;
+        }
     }
 
     switch (k) {
