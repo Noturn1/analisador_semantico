@@ -83,14 +83,14 @@ mostra:
 
 | Fase | Módulos | Situação |
 |---|---|---|
-| Análise léxica | `src/lexer.py`, `src/tokens.py` | ✅ concluída (Parte 1) |
-| Análise sintática SLR(1) | `src/grammar.py`, `src/slr.py`, `src/sintatico.py` | ✅ concluída (Parte 2) |
-| Léxico e gramática da Versão B | `src/tokens.py`, `src/grammar.py` | ✅ concluída (84 produções, 146 estados, 0 conflitos) |
-| Árvore sintática abstrata | `src/arvore.py` | ✅ concluída |
-| Análise semântica | `src/semantico.py` | ✅ concluída (E01–E26, W01–W02) |
-| Geração de código de três endereços | `src/tac.py` | ✅ concluída (executa na Berti VM) |
-| Testes e exemplos finais | `tests/`, `exemplos/` | ✅ concluída |
-| Entrega | `docs/`, pacote `.zip` | ✅ concluída |
+| Análise léxica | `src/lexer.py`, `src/tokens.py` | concluída (Parte 1) |
+| Análise sintática SLR(1) | `src/grammar.py`, `src/slr.py`, `src/sintatico.py` | concluída (Parte 2) |
+| Léxico e gramática da Versão B | `src/tokens.py`, `src/grammar.py` | concluída (84 produções, 146 estados, 0 conflitos) |
+| Árvore sintática abstrata | `src/arvore.py` | concluída |
+| Análise semântica | `src/semantico.py` | concluída (E01–E26, W01–W02) |
+| Geração de código de três endereços | `src/tac.py` | concluída (executa na Berti VM) |
+| Testes e exemplos finais | `tests/`, `exemplos/` | concluída |
+| Entrega | `docs/`, pacote `.zip` | concluída |
 
 O roteiro detalhado, com checklists por fase, está em
 **[`docs/PLANO.md`](docs/PLANO.md)**.
