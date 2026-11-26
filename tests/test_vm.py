@@ -7,6 +7,7 @@ Executar a partir da raiz do projeto:
     python3 -m unittest discover -s tests -v
 """
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -76,6 +77,35 @@ class TestExecucao(unittest.TestCase):
             "int nota = 7; int x = nota; int VERDADEIRO = 5; int t1 = 3; int _t1 = 4;"
             " int constructor = 6; puts(x); puts(VERDADEIRO); puts(t1 + _t1); puts(constructor);")),
             ["7", "5", "7", "6"])
+
+    def test_nenhum_nome_do_tac_vira_propriedade_herdada_de_objeto(self):
+        # A VM guarda a memória e os rótulos em objetos comuns de JavaScript, onde
+        # 'nome in objeto' também enxerga as propriedades de Object.prototype. A
+        # proteção da #34 prefixa um '_' em nomes que casam com _*<reservado>; para
+        # '__proto__' o reservado tem dois '_', então '_proto__' não pode ser
+        # protegido (viraria o próprio '__proto__').
+        herdados = {"constructor", "toString", "toLocaleString", "valueOf", "hasOwnProperty",
+                    "isPrototypeOf", "propertyIsEnumerable", "__proto__", "__defineGetter__",
+                    "__defineSetter__", "__lookupGetter__", "__lookupSetter__"}
+        nomes_de_usuario = [
+            "constructor", "_constructor", "toString", "valueOf", "proto__", "_proto__",
+            "__proto__", "___proto__", "defineGetter__", "_defineGetter__", "__defineGetter__",
+            "_defineSetter__", "_lookupGetter__", "_lookupSetter__",
+        ]
+        for nome in nomes_de_usuario:
+            prog = (f"func {nome}(int {nome}): int {{ return {nome}; }}"
+                    + main_com(f"int {nome} = 1; puts({nome}({nome}));"))
+            with self.subTest(nome=nome):
+                tac = tac_de(prog)
+                # nomes qualificados (f.x) ficam inteiros: só o nome todo é uma chave
+                usados = set(re.findall(r"[A-Za-z_$][A-Za-z0-9_.$]*", "\n".join(tac)))
+                self.assertEqual(usados & herdados, set())
+                self.assertEqual(executar(tac, ()), ["1"])
+
+    def test_nomes_que_so_diferem_nos_sublinhados_continuam_distintos(self):
+        prog = main_com("int proto__ = 1; int _proto__ = 2; int __proto__ = 3; int ___proto__ = 4;"
+                        " puts(proto__); puts(_proto__); puts(__proto__); puts(___proto__);")
+        self.assertEqual(roda(prog), ["1", "2", "3", "4"])
 
     def test_funcoes_com_nome_de_rotulo_ou_acento(self):
         prog = ("func L1(int n): int { if (n > 0) { return 1; } return 2; }"

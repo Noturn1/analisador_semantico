@@ -259,8 +259,8 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   para um parâmetro `float` e não é o primeiro: `param k`, `t3 =
   inttofloat(r)`, `param t3`, em vez de `t3 = inttofloat(r)`, `param k`,
   `param t3`. Pode haver `inttofloat` entre os `param` de uma mesma chamada.
-  Se o Anexo de TAC exigir `param` contíguos, esta decisão deve ser revertida
-  (a mudança está só em `GeradorTAC._emitir_chamada`).
+  O Anexo de TAC não exige `param` contíguos (conferido em 2026-11-24, #30),
+  então a decisão se mantém. A mudança está só em `GeradorTAC._chamada`.
 
 ### #23 — Leitura do arquivo-fonte: BOM descartado, UTF-8 primeiro, latin-1 de reserva
 
@@ -302,7 +302,7 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   usa `isalnum()`; `²x` é erro. Os testes estão em `tests/test_lexer.py` e em
   `tests/test_leitura.py`.
 
-### #25 — Função com nome de rótulo interno: mantida como limitação conhecida
+### #25 — Função com nome de rótulo interno: mantida como limitação conhecida (revogada pela #34)
 
 - **Contexto:** a regra do `_` (seção 8 da spec) vale só para variáveis e
   parâmetros, e funções usam o próprio nome como rótulo. Uma função chamada
@@ -314,7 +314,8 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
 - **Consequências:** um programa com uma função cujo nome case com
   `_*(t|L)[0-9]+` pode gerar TAC ambíguo (rótulos duplicados), sem erro nem
   aviso. Se for preciso depois, basta aplicar `endereco_variavel` ao rótulo da
-  função e aos `call` em `src/tac.py`.
+  função e aos `call` em `src/tac.py`. (Revogada pela decisão #34, que aplicou o
+  `_` também aos nomes de função.)
 
 ### #26 — Argumento de `input`: E09, E19 e E01
 
@@ -438,3 +439,6 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   rótulos duplicados. Verificado com 4.900 programas aleatórios, comparando a saída
   do `script.js` da imagem `phoberti/bertol:1.0` com a de um interpretador da AST.
   `tests/test_vm.py` executa o TAC num porte da VM (`tests/berti_vm.py`).
+  Ajuste de 2026-11-26: em `__proto__` e `__define...__` os dois `_` iniciais
+  fazem parte do nome reservado. Antes, um nome de usuário com um só `_`
+  (`_proto__`) era levado para o próprio `__proto__`. Teste em `tests/test_vm.py`.

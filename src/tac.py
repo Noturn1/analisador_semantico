@@ -46,11 +46,13 @@ OP_NA_VM = {"AND": "&&", "OR": "||", "XOR": "!=", "XNOR": "!="}
 
 # Temporários e rótulos; nomes iniciados por 'not', que a VM lê como negação
 # ('x = nota' vira 'not a'); constantes lógicas; rotinas do gerador; e nomes
-# que todo objeto JavaScript já tem, que quebram a memória da VM.
+# que todo objeto JavaScript já tem, que quebram a memória da VM. Em '__proto__'
+# e '__define...__' os dois '_' iniciais fazem parte do nome reservado: assim
+# '_proto__' não casa e não é levado para o próprio '__proto__'.
 _NOME_RESERVADO = re.compile(
     r"_*([tL][0-9]+|not.*|VERDADEIRO|FALSO|potencia_(int|float).*|constructor"
     r"|toString|toLocaleString|valueOf|hasOwnProperty|isPrototypeOf"
-    r"|propertyIsEnumerable|proto__|(define|lookup)(Getter|Setter)__)")
+    r"|propertyIsEnumerable|__proto__|__(define|lookup)(Getter|Setter)__)")
 _CONSTANTE_INT = re.compile(r"-?[0-9]+")
 _TEMPORARIO = re.compile(r"t[0-9]+")
 

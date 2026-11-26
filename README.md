@@ -151,6 +151,16 @@ python3 run.py exemplos/ExemploArjanov.arj -o saida.tac
 Para parar e voltar a usar: `docker stop bertol` e `docker start bertol`. Sem
 Docker, basta abrir o `Berti VM/index.html` do repositório da VM no navegador.
 
+A VM tem limites próprios, que o compilador não controla:
+
+- ela interrompe a execução em 200.000 instruções (laço infinito ou programa
+  muito longo);
+- os números são os do JavaScript: inteiros acima de 2^53 perdem precisão, e uma
+  divisão por zero em tempo de execução dá `Infinity` ou `NaN`, sem mensagem de
+  erro;
+- uma entrada só de dígitos lida numa variável `str` fica numérica, e `s == '5'`
+  dá falso (decisão #30).
+
 ## A linguagem Arjanov
 
 Programas são formados por funções; a execução começa em `main`. Na Parte 3 a
