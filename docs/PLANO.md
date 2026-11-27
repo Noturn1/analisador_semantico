@@ -2,7 +2,7 @@
 
 Roteiro para concluir o compilador Arjanov: análise semântica e geração de
 código de três endereços (TAC). A referência normativa é
-[`Especificacao_Semantica_Arjanov_v2.pdf`](Especificacao_Semantica_Arjanov_v2.pdf)
+[`Especificacao_Semantica_Arjanov_v3.pdf`](Especificacao_Semantica_Arjanov_v3.pdf)
 (a "spec"); as decisões já tomadas estão em [`DECISOES.md`](DECISOES.md).
 
 - **Prazo de entrega:** 02/12, 23:59
@@ -18,14 +18,14 @@ arquivo é sempre o retrato atual do projeto.
 
 | Fase | Situação |
 |---|---|
-| 0 — Organização do repositório | ✅ concluída |
-| 1 — Léxico e gramática da Versão B | ✅ concluída |
-| 2 — AST | ✅ concluída |
-| 3 — Analisador semântico | ✅ concluída (interpretações confirmadas em 2026-11-19, ver abaixo) |
-| 4 — Gerador de TAC | ✅ concluída (interpretações resolvidas em 2026-11-19, ver abaixo) |
-| 5 — Integração no `main.py` | ✅ concluída |
-| 6 — Testes e exemplos | ✅ concluída |
-| 7 — Entrega | ⏳ **próxima** |
+| 0 — Organização do repositório | concluída |
+| 1 — Léxico e gramática da Versão B | concluída |
+| 2 — AST | concluída |
+| 3 — Analisador semântico | concluída (interpretações confirmadas em 2026-11-19, ver abaixo) |
+| 4 — Gerador de TAC | concluída (interpretações resolvidas em 2026-11-19, ver abaixo) |
+| 5 — Integração no `main.py` | concluída |
+| 6 — Testes e exemplos | concluída |
+| 7 — Entrega | concluída |
 
 O léxico e a gramática já estão na Versão B: 84 produções, 146 estados,
 0 conflitos. `exemplos/ExemploArjanov.arj` (reescrito na nova sintaxe) é
@@ -44,14 +44,14 @@ foram renomeados para `tokens.py` e `sintatico.py` (decisão #16).
 
 ---
 
-## Fase 0 — Organização ✅
+## Fase 0 — Organização
 
 - [x] `.gitignore` (caches, `.DS_Store`, `*.tac`, `.zip`, PDFs da disciplina)
 - [x] Tag `parte-2` marcando o estado entregue na Parte 2
 - [x] Código-fonte único em `src/` e atalho `run.py` na raiz
 - [x] `docs/DECISOES.md` com as decisões #1 a #12
 
-## Fase 1 — Léxico e gramática da Versão B ✅
+## Fase 1 — Léxico e gramática da Versão B
 
 Spec, seção 2 e Apêndice A. Decisão #10.
 
@@ -68,7 +68,7 @@ Spec, seção 2 e Apêndice A. Decisão #10.
 
 **Pronto quando:** `python3 run.py exemplos/ExemploArjanov.arj` aceita o
 exemplo reescrito e a recuperação em modo pânico continua funcionando em
-`exemplos/erros.arj`. ✅
+`exemplos/erros.arj`.
 
 Notas: `exemplos/erros.arj` não precisou mudar (só tem `main()` sem
 parâmetros). O novo `ExemploArjanov.arj` já foi escrito para ser válido
@@ -77,7 +77,7 @@ da `main`, `return` em todos os caminhos), para servir de teste positivo nas
 Fases 3 e 6. Ao copiar o programa da seção 10 do PDF, remova o caractere
 form feed (`\f`) da quebra de página, senão o léxico o rejeita.
 
-## Fase 2 — Árvore sintática abstrata ✅
+## Fase 2 — Árvore sintática abstrata
 
 Decisões #11, #13 a #16. Módulo `src/arvore.py`.
 
@@ -117,7 +117,7 @@ Guia rápido da AST para a Fase 3:
 Todo `Expr` tem `tipo` (inicialmente `None`). Parênteses não geram nó, e
 `case -1:` vira `Unario('-', Literal(1))`.
 
-## Fase 3 — Analisador semântico ✅
+## Fase 3 — Analisador semântico
 
 Spec, seções 3 a 7. Módulo `src/semantico.py`, produzindo erros no
 formato `[Erro Semântico] Linha L, Coluna C: mensagem` e avisos
@@ -189,7 +189,7 @@ decisões #21 e #26):
 As mensagens exatas e exemplos de cada código estão na tabela da seção 7 da
 spec; use o texto de lá.
 
-## Fase 4 — Gerador de TAC ✅
+## Fase 4 — Gerador de TAC
 
 Spec, seções 8 a 10. Módulo `src/tac.py`. Entrada: a AST anotada pelo
 semântico (`tipo` em cada expressão e `tipo_destino` em cada `Atrib`).
@@ -210,7 +210,7 @@ manda escrever as constantes como no fonte.
       procedimentos (9.7)
 
 **Pronto quando:** o programa da seção 10 gera **exatamente** o TAC impresso
-na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
+na spec. (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 
 ### Interpretações adotadas onde a spec é omissa (todas resolvidas em 2026-11-19)
 
@@ -221,8 +221,8 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
    `t3 = inttofloat(r)`, `param t3`). Antes, todos os `inttofloat` saíam antes
    dos `param`; a diferença só aparece quando um argumento não literal `int`
    vai para um parâmetro `float` e não é o primeiro. O exemplo da seção 10 não
-   é afetado. **Pendente:** conferir no Anexo de TAC se os `param` de uma
-   chamada precisam ser contíguos; se precisarem, reverter a decisão #22.
+   é afetado. Conferido no Anexo em 2026-11-24: os `param` não
+   precisam ser contíguos (decisão #30).
 2. **Renomeação com `_`** aplicada só a variáveis e parâmetros, como diz a
    spec. Mantida assim, como limitação conhecida (decidido em 2026-11-19,
    decisão #25): uma *função* chamada `L1` gera o rótulo `L1:` e, no mesmo
@@ -242,7 +242,10 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
    exemplo da seção 10 mantém `ifFalse true goto L3` sem otimizar e a 9.6 diz
    que o `goto Lfim` é obrigatório.
 
-## Fase 5 — Integração no `main.py` ✅
+> **Atualização (2026-11-24):** o formato desta fase foi substituído pelo da Berti
+> VM, usada na avaliação (decisões #30 a #34). O item 2 acima deixou de valer.
+
+## Fase 5 — Integração no `main.py`
 
 - [x] Encadear léxico → sintático → AST → semântico → TAC; cada fase só roda se
       a anterior terminar sem erros; avisos não bloqueiam
@@ -252,7 +255,7 @@ na spec. ✅ (`tests/dados/secao10.arj` → `tests/dados/secao10.tac`)
 - [x] Saída padrão: diagnósticos, TAC e veredito; árvore sintática só com
       `--arvore` (decisão #20)
 
-## Fase 6 — Testes e exemplos ✅
+## Fase 6 — Testes e exemplos
 
 - [x] `exemplos/ExemploArjanov.arj`: válido e usando todas as primitivas
       (sem diagnósticos, gera TAC)
@@ -273,11 +276,16 @@ fica numa função com o nome do código (`e01_variavel_nao_declarada`, ...),
 chamada pela `main` para não gerar W01 extra. E17 e E18 estão na própria
 `main` (`func main(int ...): str`).
 
-## Fase 7 — Entrega (≈ 1 dia)
+## Fase 7 — Entrega
 
-- [ ] Fechar a seção 12 da spec e atualizar o PDF se alguma decisão mudar
-- [ ] Revisar o `README.md`
-- [ ] Montar o `.zip` com a spec, `src/` e `exemplos/`
+- [x] Fechar a seção 12 da spec e atualizar o PDF (v3, decisão #29)
+- [x] Revisar o `README.md`
+- [x] Montar o `.zip` com a spec, `src/` e `exemplos/` (mais `run.py`, `tests/`
+      e `README.md`); não é versionado, ver `.gitignore`
+- [x] Revisão final: E24 em função duplicada (decisão #28) e
+      `ExemploArjanov.arj` ampliado (conversão em argumento e `return`, `switch`
+      sobre `str` e `bool`, fallthrough com corpo, valores padrão)
+- [x] TAC executável na Berti VM (decisões #30 a #34), com `tests/test_vm.py`
 
 ---
 

@@ -259,8 +259,8 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   para um parâmetro `float` e não é o primeiro: `param k`, `t3 =
   inttofloat(r)`, `param t3`, em vez de `t3 = inttofloat(r)`, `param k`,
   `param t3`. Pode haver `inttofloat` entre os `param` de uma mesma chamada.
-  Se o Anexo de TAC exigir `param` contíguos, esta decisão deve ser revertida
-  (a mudança está só em `GeradorTAC._emitir_chamada`).
+  O Anexo de TAC não exige `param` contíguos (conferido em 2026-11-24, #30),
+  então a decisão se mantém. A mudança está só em `GeradorTAC._chamada`.
 
 ### #23 — Leitura do arquivo-fonte: BOM descartado, UTF-8 primeiro, latin-1 de reserva
 
@@ -302,7 +302,7 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   usa `isalnum()`; `²x` é erro. Os testes estão em `tests/test_lexer.py` e em
   `tests/test_leitura.py`.
 
-### #25 — Função com nome de rótulo interno: mantida como limitação conhecida
+### #25 — Função com nome de rótulo interno: mantida como limitação conhecida (revogada pela #34)
 
 - **Contexto:** a regra do `_` (seção 8 da spec) vale só para variáveis e
   parâmetros, e funções usam o próprio nome como rótulo. Uma função chamada
@@ -314,7 +314,8 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
 - **Consequências:** um programa com uma função cujo nome case com
   `_*(t|L)[0-9]+` pode gerar TAC ambíguo (rótulos duplicados), sem erro nem
   aviso. Se for preciso depois, basta aplicar `endereco_variavel` ao rótulo da
-  função e aos `call` em `src/tac.py`.
+  função e aos `call` em `src/tac.py`. (Revogada pela decisão #34, que aplicou o
+  `_` também aos nomes de função.)
 
 ### #26 — Argumento de `input`: E09, E19 e E01
 
@@ -333,7 +334,7 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   nome da chamada e o E01 no nome da variável. Os testes estão em `TestInput`,
   em `tests/test_semantico.py`. Para tirar a ambiguidade do PDF, a frase da 6.6
   poderia ficar "que deve ser uma variável (E19); se não estiver declarada,
-  E01" (o PDF é do grupo e a fonte dele não está no repositório).
+  E01" (o PDF é do grupo e a fonte dele não está no repositório; feito na v3, decisão #29).
 
 ### #27 — Um erro sintático por token
 
@@ -353,3 +354,91 @@ Formato de cada entrada: **contexto**, **decisão** e **consequências**.
   cascatas em tokens diferentes não foram tratadas: um `)` esquecido numa
   condição ainda gera 3 erros, porque a recuperação fecha a função no `}` do
   bloco. Os testes estão em `tests/test_sintatico.py`.
+
+### #28 — E24 também na segunda definição de uma função
+
+- **Contexto:** no cadastro, a segunda definição de um nome (E08) era
+  descartada antes da verificação de parâmetros repetidos, e a passada dos
+  corpos supunha que o E24 já tinha saído. `func f() { }` seguida de
+  `func f(int a, int a) { }` gerava só o E08.
+- **Decisão:** em 2026-11-24, o E24 passa a ser verificado antes do E08, em toda
+  definição, coerente com a #21 (o corpo da segunda também é analisado).
+- **Consequências:** os programas válidos e os exemplos não mudam. Teste em
+  `TestFuncaoDuplicada`, em `tests/test_semantico.py`.
+
+### #29 — Versão 3 da especificação
+
+- **Contexto:** a v2 ainda listava a seção 12 como pontos a confirmar, citava
+  arquivos renomeados ou inexistentes (`token.py`, `parser.py`, `docs/GLC.md`) e
+  não registrava as interpretações das decisões #21, #22 e #26. A fonte do PDF
+  da v2 não está no repositório.
+- **Decisão:** em 2026-11-24 a v3 foi gerada a partir do texto da v2, com fonte
+  editável (`docs/Especificacao_Semantica_Arjanov_v3.docx`). Mudaram: seção 1
+  (arquivos de teste), seção 2 (nomes dos módulos), seção 5 (W01 com E16),
+  seção 6.1 (W02), seção 6.6 (`input`), seção 7 (regras de emissão), seção 9.7
+  (`inttofloat` antes do `param`) e seção 12 (decisões confirmadas na #10).
+  As seções 8 a 10 mudaram depois, com as decisões #30 a #34.
+- **Consequências:** a v3 passa a ser a referência normativa; a v2 fica como
+  histórico. O comportamento do compilador não muda.
+
+### #30 — O TAC é gerado para a Berti VM
+
+- **Contexto:** o professor avisou (Teams, 09/11) que o código gerado será
+  testado na Berti VM (https://github.com/phoberti/bertol-compilador-vm). O
+  formato anterior, o da spec v2, não executava: a VM começa na primeira linha,
+  não conhece `call puts` nem `call input` e não aceita `'texto'`, `AND`, `OR`,
+  `XOR`, `- x` e `^`. Chegava a terminar sem erro e sem executar a `main`.
+- **Decisão:** em 2026-11-24 o gerador passa a ter um único formato, executável
+  na VM sem alterações: `goto main` no início; `puts` vira `print` e `input` vira
+  `read` (com `inttofloat` para `float` e comparação com `"true"` e `1` para
+  `bool`); strings entre aspas duplas, com a aspa dupla interna trocada por
+  simples; `&&`, `||` e, para o XOR de `bool`, `!=`; `-x` e `!x` sem espaço; string
+  literal em `param` e `return` passa por um temporário.
+- **Consequências:** substitui o formato das seções 8 a 10 da v2 (a v3 já traz o
+  novo). Limitação da VM: uma entrada só de dígitos lida numa `str` fica
+  numérica, e `s == '5'` dá falso. Um valor de tipo errado num `input` de `int`
+  não é detectado. A conferência pendente da #22 está resolvida: o Anexo
+  (`codigo_tres_enderecos.pdf`, no repositório da VM) não exige `param` contíguos
+  e a VM também não.
+
+### #31 — Ligação de parâmetros e variáveis qualificadas
+
+- **Contexto:** na VM a memória é global e o `call` descarta os `param` sem
+  associá-los aos parâmetros formais.
+- **Decisão:** os `param` continuam sendo emitidos, como no Anexo, e cada
+  argumento é copiado para o formal antes do `call`. Variáveis de funções que não
+  são a `main` levam o nome da função (`fat.n`). Um argumento que é um formal já
+  sobrescrito por cópia anterior passa por um temporário.
+
+### #32 — Recursão com pilha em vetor
+
+- **Contexto:** com memória global, a chamada recursiva sobrescreve as variáveis
+  e os temporários de quem chamou.
+- **Decisão:** quando a função chamada pode voltar à atual (pelo grafo de
+  chamadas), as variáveis visíveis e os temporários pendentes são guardados em
+  `$pilha[$topo]` antes da chamada e restaurados depois.
+- **Consequências:** recursão simples e mútua funcionam; chamadas não recursivas
+  não têm custo extra.
+
+### #33 — Potência por rotina
+
+- **Decisão:** `^` vira chamada a `potencia_int` (quadrados sucessivos) ou
+  `potencia_float` (parte fracionária do expoente por raízes quadradas), emitidas
+  no fim do TAC só quando usadas. Expoente inteiro negativo segue a divisão
+  inteira: `2 ^ -1` é 0.
+
+### #34 — Nomes protegidos
+
+- **Contexto:** além de temporários e rótulos, a VM dá outro sentido a nomes
+  iniciados por `not` (`x = nota` vira `not a`), a `VERDADEIRO` e `FALSO`, e quebra
+  com propriedades de objetos JavaScript (`constructor`). Rótulos só podem ser
+  ASCII.
+- **Decisão:** esses nomes ganham `_` na frente, em variáveis e em funções, e o
+  rótulo de função perde os acentos (com `_` no fim se coincidir com outro).
+- **Consequências:** revoga a #25: uma função `L1` vira `_L1` e não há mais
+  rótulos duplicados. Verificado com 4.900 programas aleatórios, comparando a saída
+  do `script.js` da imagem `phoberti/bertol:1.0` com a de um interpretador da AST.
+  `tests/test_vm.py` executa o TAC num porte da VM (`tests/berti_vm.py`).
+  Ajuste de 2026-11-26: em `__proto__` e `__define...__` os dois `_` iniciais
+  fazem parte do nome reservado. Antes, um nome de usuário com um só `_`
+  (`_proto__`) era levado para o próprio `__proto__`. Teste em `tests/test_vm.py`.

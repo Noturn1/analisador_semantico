@@ -32,8 +32,10 @@ def tac_de(codigo: str) -> list[str]:
 
 
 def instrucoes(codigo: str) -> list[str]:
-    """TAC sem recuo e sem linhas em branco, para comparações compactas."""
-    return [linha.strip() for linha in tac_de(codigo) if linha.strip()]
+    """TAC sem recuo, linhas em branco e o 'goto main' inicial (decisão #30)."""
+    linhas = [linha.strip() for linha in tac_de(codigo) if linha.strip()]
+    assert linhas[0] == "goto main", linhas[0]
+    return linhas[1:]
 
 
 class TestSecao10(unittest.TestCase):
@@ -48,7 +50,7 @@ class TestSecao10(unittest.TestCase):
 class TestEsquemas(unittest.TestCase):
     def test_xnor_vira_xor_e_negacao(self):
         self.assertEqual(instrucoes("func main() { bool b = true XNOR false; }"), [
-            "main:", "t1 = true XOR false", "t2 = ! t1", "b = t2", "return",
+            "main:", "t1 = true != false", "t2 = !t1", "b = t2", "return",
         ])
 
     def test_nomes_que_colidem_com_temporarios_e_rotulos(self):
@@ -58,7 +60,7 @@ class TestEsquemas(unittest.TestCase):
 
     def test_valores_padrao(self):
         self.assertEqual(instrucoes("func main() { int a; float b; str c; bool d; }"), [
-            "main:", "a = 0", "b = 0.0", "c = ''", "d = false", "return",
+            "main:", "a = 0", "b = 0.0", 'c = ""', "d = false", "return",
         ])
 
     def test_widen_em_argumento_atribuicao_e_constante(self):
@@ -67,7 +69,7 @@ class TestEsquemas(unittest.TestCase):
         self.assertEqual(instrucoes(prog), [
             "f:", "return",
             "main:", "i = 1", "x = 0.0",
-            "t1 = inttofloat(i)", "param t1", "call f, 1",
+            "t1 = inttofloat(i)", "param t1", "f.a = t1", "call f, 1",
             "t2 = inttofloat(i)", "x = t2",
             "x = 2.0",
             "return",
@@ -82,7 +84,8 @@ class TestEsquemas(unittest.TestCase):
         self.assertEqual(instrucoes(prog), [
             "f:", "return",
             "main:", "i = 1", "j = 2",
-            "param i", "t1 = inttofloat(j)", "param t1", "call f, 2",
+            "param i", "t1 = inttofloat(j)", "param t1",
+            "f.a = i", "f.b = t1", "call f, 2",
             "return",
         ])
 
@@ -92,11 +95,12 @@ class TestEsquemas(unittest.TestCase):
                 "func f(int a, float b) { }\n"
                 "func main() { int i = 1; int j = 2; f(g(i), j); }")
         self.assertEqual(instrucoes(prog), [
-            "g:", "return x",
+            "g:", "return g.x",
             "f:", "return",
             "main:", "i = 1", "j = 2",
-            "param i", "t1 = call g, 1",
-            "param t1", "t2 = inttofloat(j)", "param t2", "call f, 2",
+            "param i", "g.x = i", "t1 = call g, 1",
+            "param t1", "t2 = inttofloat(j)", "param t2",
+            "f.a = t1", "f.b = t2", "call f, 2",
             "return",
         ])
 
@@ -104,7 +108,7 @@ class TestEsquemas(unittest.TestCase):
         prog = "func main() { int a = 1; if (a > 0 AND a < 5) { a = 2; } }"
         self.assertEqual(instrucoes(prog), [
             "main:", "a = 1",
-            "t1 = a > 0", "t2 = a < 5", "t3 = t1 AND t2",
+            "t1 = a > 0", "t2 = a < 5", "t3 = t1 && t2",
             "ifFalse t3 goto L1", "a = 2", "L1:", "return",
         ])
 
@@ -139,8 +143,51 @@ class TestEsquemas(unittest.TestCase):
 
     def test_input_e_puts(self):
         self.assertEqual(instrucoes("func main() { str s; input(s); puts(s); }"), [
-            "main:", "s = ''", "s = call input, 0", "param s", "call puts, 1", "return",
+            "main:", 's = ""', "read s", "print s", "return",
         ])
+
+    def test_input_converte_para_o_tipo_da_variavel(self):
+        self.assertEqual(instrucoes("func main() { float f; bool b; input(f); input(b); }"), [
+            "main:", "f = 0.0", "b = false",
+            "read f", "f = inttofloat(f)",
+            "read b", 't1 = b == "true"', "t2 = b == 1", "b = t1 || t2", "return",
+        ])
+
+    def test_string_em_param_e_return_passa_por_temporario(self):
+        prog = "func f(str s): str { return 'a b'; }\nfunc main() { f('c d'); }"
+        self.assertEqual(instrucoes(prog), [
+            "f:", 't1 = "a b"', "return t1",
+            "main:", 't2 = "c d"', "param t2", "f.s = t2", "call f, 1", "return",
+        ])
+
+    def test_chamada_recursiva_salva_variaveis_e_temporarios(self):
+        prog = ("func f(int n): int { if (n < 1) { return 1; } return f(n - 1) + f(n - 2); }\n"
+                "func main() { f(3); }")
+        linhas = [linha.strip() for linha in tac_de(prog) if linha.strip()]
+        self.assertEqual(linhas, [
+            "$topo = 0", "goto main",
+            "f:", "ifFalse f.n < 1 goto L1", "return 1", "L1:",
+            "t1 = f.n - 1", "param t1",
+            "$pilha[$topo] = f.n", "$topo = $topo + 1",
+            "f.n = t1", "t2 = call f, 1",
+            "$topo = $topo - 1", "f.n = $pilha[$topo]",
+            "t3 = f.n - 2", "param t3",
+            "$pilha[$topo] = f.n", "$topo = $topo + 1",
+            "$pilha[$topo] = t2", "$topo = $topo + 1",  # t2 ainda será somado
+            "f.n = t3", "t4 = call f, 1",
+            "$topo = $topo - 1", "t2 = $pilha[$topo]",
+            "$topo = $topo - 1", "f.n = $pilha[$topo]",
+            "t5 = t2 + t4", "return t5",
+            "main:", "param 3", "f.n = 3", "call f, 1", "return",
+        ])
+
+    def test_rotina_de_potencia_so_quando_usada(self):
+        self.assertNotIn("potencia_int:", instrucoes("func main() { int a = 2 * 2; }"))
+        tac = instrucoes("func main() { int a = 2 ^ 3; }")
+        self.assertEqual(tac[:8], ["main:", "param 2", "param 3", "$b = 2", "$e = 3",
+                                   "t1 = call potencia_int, 2", "a = t1", "return"])
+        self.assertIn("potencia_int:", tac)
+        self.assertNotIn("potencia_float:", tac)
 
     def test_conversoes_explicitas(self):
         prog = "func main() { float f = 2.5; int i = int(f); float g = float(i); i = int(i); }"

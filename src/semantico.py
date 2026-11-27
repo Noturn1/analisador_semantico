@@ -1,7 +1,7 @@
 """
 semantico.py - Analisador semântico da linguagem Arjanov
 
-Implementa as seções 3 a 7 de docs/Especificacao_Semantica_Arjanov_v2.pdf
+Implementa as seções 3 a 7 de docs/Especificacao_Semantica_Arjanov_v3.pdf
 (Versão B, docs/DECISOES.md #10) sobre a AST de arvore.py.
 
 Duas passadas:
@@ -180,16 +180,17 @@ class AnalisadorSemantico:
     def _cadastrar_funcoes(self):
         funcoes = self.res.funcoes
         for f in self.programa.funcoes:
-            if f.nome in funcoes:
-                anterior = funcoes[f.nome]
-                self._diag("E08", f"função '{f.nome}' já definida na linha {anterior.linha}", f)
-                continue
-
+            # O E24 vale também para a segunda definição de um nome (E08).
             vistos = set()
             for p in f.params:
                 if p.nome in vistos:
                     self._diag("E24", f"parâmetro '{p.nome}' repetido em '{f.nome}'", p)
                 vistos.add(p.nome)
+
+            if f.nome in funcoes:
+                anterior = funcoes[f.nome]
+                self._diag("E08", f"função '{f.nome}' já definida na linha {anterior.linha}", f)
+                continue
 
             funcoes[f.nome] = SimboloFuncao(
                 nome=f.nome,

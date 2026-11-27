@@ -47,7 +47,7 @@ class TestLeituraDoFonte(unittest.TestCase):
     def test_acento_em_utf8_sai_certo_no_tac(self):
         codigo, saida = compilar(PROGRAMA.encode("utf-8"))
         self.assertEqual(codigo, 0, saida)
-        self.assertIn("param 'Média'", saida)
+        self.assertIn('print "Média"', saida)
         self.assertNotIn("MÃ©dia", saida)
 
     def test_arquivo_de_saida_tem_o_acento_certo(self):
@@ -55,7 +55,7 @@ class TestLeituraDoFonte(unittest.TestCase):
             tac = Path(pasta) / "saida.tac"
             codigo, saida = compilar(PROGRAMA.encode("utf-8"), "-o", str(tac))
             self.assertEqual(codigo, 0, saida)
-            self.assertIn("param 'Média'", tac.read_text(encoding="utf-8"))
+            self.assertIn('print "Média"', tac.read_text(encoding="utf-8"))
 
     def test_coluna_conta_caracteres_e_nao_bytes(self):
         # A coluna esperada sai do texto do programa: o acento ocupa 1 coluna.
@@ -70,7 +70,7 @@ class TestLeituraDoFonte(unittest.TestCase):
         # Sem UTF-8 válido, a leitura cai para latin-1 (como antes da #23).
         codigo, saida = compilar(PROGRAMA.encode("latin-1"))
         self.assertEqual(codigo, 0, saida)
-        self.assertIn("param 'Média'", saida)
+        self.assertIn('print "Média"', saida)
 
     def test_digito_nao_ascii_nao_derruba_o_compilador(self):
         # Em UTF-8 o '²' chega ao léxico como um caractere só: tem que virar
